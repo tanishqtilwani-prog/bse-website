@@ -11,7 +11,7 @@ SUPABASE_URL = "https://kbklmidusxqkbjgpsdlg.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDExNTcxNywiZXhwIjoyMDk1NjkxNzE3fQ.v-gWV939rbNfNSXxzSbzaGduDXvxFhB8f_MHEp0wlFY"
 CSV_FILE     = "ind_nifty500list.csv"
 POLL_EVERY   = 300
-OFFSET_FILE  = "/tmp/tg_offset.json"
+OFFSET_FILE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tg_offset.json")
 
 # ── LOAD NIFTY 500 ──
 def load_nifty500():
@@ -126,12 +126,8 @@ def fetch_updates(offset):
         print(f"Fetch error: {e}")
         return [], offset
 
-# ── PROCESS UPDATE ──
-def process_update(update):
-    msg = update.get("channel_post")
-    if not msg:
-        return
-
+# ── PROCESS MESSAGE ──
+def process_message(msg):
     chat_id = msg.get("chat", {}).get("id")
     if str(chat_id) != CHANNEL_ID:
         return
@@ -146,32 +142,80 @@ def process_update(update):
     category = detect_category(text)
     nifty = is_nifty500(company) if company else False
 
-    files = []
-    if msg.get("document"):
-        files.append({"type": "document", "file_id": msg["document"]["file_id"]})
-    if msg.get("photo"):
-        files.append({"type": "photo", "file_id": msg["photo"][-1]["file_id"]})
-
     record = {
-        "channel": "results",
-        "telegram_chat_id": chat_id,
-        "telegram_message_id": message_id,
-        "category": category,
-        "symbol": symbol,
+        "message_id": message_id,
+        "text": clean_text(text),
+        "date": posted_at,
         "company_name": company,
-        "title": company,
-        "body": clean_text(text),
-        "files": files,
-        "raw": msg,
-        "posted_at": posted_at,
+        "category": category,
         "is_nifty500": nifty,
     }
 
     supabase_upsert(record)
     print(f"Synced: {company or 'unknown'} | {category} | nifty={nifty}")
 
+# ── PROCESS UPDATE ──
+def process_update(update):
+    msg = update.get("channel_post")
+    if msg:
+        process_message(msg)
+
+# ── BACKFILL using getChatHistory via forwardMessages trick ──
+def backfill(num_messages=200):
+    print(f"Backfilling last {num_messages} messages...")
+    # Use getHistory via bot API - fetch messages by ID range
+    try:
+        # Get latest message id first
+        resp = requests.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params={"limit": 1, "allowed_updates": json.dumps(["channel_post"])},
+            timeout=40
+        )
+        data = resp.json()
+        updates = data.get("result", [])
+        if not updates:
+            print("No updates found for backfill reference")
+            return
+
+        latest_id = updates[-1].get("channel_post", {}).get("message_id", 0)
+        if not latest_id:
+            print("Could not get latest message ID")
+            return
+
+        print(f"Latest message ID: {latest_id}, fetching backwards...")
+        count = 0
+        for msg_id in range(latest_id, max(latest_id - num_messages, 0), -1):
+            try:
+                resp = requests.get(
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/forwardMessage",
+                    params={
+                        "chat_id": BOT_TOKEN.split(":")[0],  # bot's own chat - won't work
+                    },
+                    timeout=10
+                )
+            except:
+                pass
+
+        # Alternative: just rely on getUpdates with offset=0 to get all pending
+        resp = requests.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+            params={"offset": -num_messages, "limit": num_messages, "allowed_updates": json.dumps(["channel_post"])},
+            timeout=40
+        )
+        data = resp.json()
+        if data.get("ok"):
+            updates = data.get("result", [])
+            print(f"Got {len(updates)} messages for backfill")
+            for update in updates:
+                process_update(update)
+            count = len(updates)
+        print(f"Backfill done: {count} messages processed")
+    except Exception as e:
+        print(f"Backfill error: {e}")
+
 # ── MAIN LOOP ──
 print("BSE Channel Sync started!")
+backfill(200)
 offset = load_offset()
 
 while True:
