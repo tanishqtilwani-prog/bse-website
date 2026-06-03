@@ -2,600 +2,695 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Indian Markets Live — BSE/NSE Results & Alerts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Market Pulse — BSE/NSE Live Alerts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap');
+:root {
+  --bg: #ffffff;
+  --surface: #f8f8f8;
+  --card: #ffffff;
+  --border: #e8e8e8;
+  --text: #0a0a0a;
+  --muted: #666;
+  --accent: #0a0a0a;
+  --red: #e03e3e;
+  --green: #16a34a;
+  --tag-bg: #f0f0f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --radius: 12px;
+}
+[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --card: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #888;
+  --accent: #f0f0f0;
+  --tag-bg: #252525;
+  --shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  transition: background 0.2s, color 0.2s;
+}
 
-  :root {
-    --bg: #FFFFFF;
-    --surface: #FFFFFF;
-    --card: #FFFFFF;
-    --border: #E0E0E0;
-    --accent: #000000;
-    --accent2: #000000;
-    --red: #C0392B;
-    --text: #000000;
-    --muted: #444444;
-    --tag-bg: #F5F5F5;
-    --header-bg: #FFFFFF;
-  }
+/* ── HEADER ── */
+header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--green);
+  background: rgba(22,163,74,0.1);
+  border: 1px solid rgba(22,163,74,0.25);
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+.live-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.theme-btn {
+  width: 34px; height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  color: var(--text);
+}
+.theme-btn:active { transform: scale(0.92); }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ── SEARCH ── */
+.search-section {
+  padding: 12px 16px 0;
+  background: var(--bg);
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+}
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0 14px;
+  height: 44px;
+  transition: border-color 0.15s;
+}
+.search-box:focus-within { border-color: var(--accent); }
+.search-box svg { flex-shrink: 0; opacity: 0.4; }
+#search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+}
+#search-input::placeholder { color: var(--muted); }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh;
-  }
+/* ── FILTERS ── */
+.filters-section {
+  padding: 10px 16px 0;
+  background: var(--bg);
+  position: sticky;
+  top: 112px;
+  z-index: 98;
+}
+.filters-scroll {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.filters-scroll::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.filter-chip:active { transform: scale(0.95); }
+.filter-chip.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+.filter-chip.nifty.active {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}
 
-  header {
-    background: var(--header-bg);
-    padding: 0 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
+/* ── DATE TABS ── */
+.date-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.date-tab {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.date-tab.active {
+  background: var(--text);
+  color: var(--bg);
+}
 
-  .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: #000000;
-  }
+/* ── MAIN ── */
+.main { padding: 12px 16px 80px; max-width: 680px; margin: 0 auto; }
 
-  .logo-sub {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    color: #000000;
-    margin-left: 10px;
-    font-weight: 400;
-  }
+.stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.stats-text {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.refresh-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.refresh-btn:active { transform: scale(0.95); }
 
-  .live-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: #000000;
-    font-family: 'DM Mono', monospace;
-    border: 1px solid #333328;
-    padding: 4px 10px;
-    border-radius: 20px;
-  }
+/* ── CARD ── */
+.feed { display: flex; flex-direction: column; gap: 10px; }
+.post-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+  animation: fadeUp 0.2s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.company-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.3;
+  flex: 1;
+}
+.card-time {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.card-body {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card-body.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.tag {
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  background: var(--tag-bg);
+  color: var(--muted);
+}
+.tag-result   { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+.tag-dividend { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.tag-bonus    { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+.tag-buyback  { background: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
+.tag-order    { background: #ccfbf1; color: #134e4a; border-color: #99f6e4; }
+.tag-nifty    { background: #16a34a; color: #fff; border-color: #16a34a; }
+[data-theme="dark"] .tag-result   { background: rgba(251,191,36,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.3); }
+[data-theme="dark"] .tag-dividend { background: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.3); }
+[data-theme="dark"] .tag-bonus    { background: rgba(96,165,250,0.15); color: #60a5fa; border-color: rgba(96,165,250,0.3); }
+[data-theme="dark"] .tag-buyback  { background: rgba(192,132,252,0.15); color: #c084fc; border-color: rgba(192,132,252,0.3); }
+[data-theme="dark"] .tag-order    { background: rgba(45,212,191,0.15); color: #2dd4bf; border-color: rgba(45,212,191,0.3); }
 
-  .dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #000000;
-    animation: pulse 2s infinite;
-  }
+.card-actions { display: flex; gap: 8px; align-items: center; }
+.action-btn {
+  font-size: 11px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.15s;
+  text-decoration: none;
+  display: flex; align-items: center; gap: 3px;
+}
+.action-btn:active { opacity: 0.6; }
+.action-btn:hover { color: var(--text); }
+.expand-btn { font-size: 11px; }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
+/* ── STOCK PRICE ── */
+.stock-price {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--tag-bg);
+  border: 1px solid var(--border);
+}
+.stock-price.up { color: var(--green); background: rgba(22,163,74,0.1); border-color: rgba(22,163,74,0.2); }
+.stock-price.down { color: var(--red); background: rgba(224,62,62,0.1); border-color: rgba(224,62,62,0.2); }
 
-  .controls {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 16px 32px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-    position: sticky;
-    top: 60px;
-    z-index: 99;
-  }
-
-  .search-wrap {
-    position: relative;
-    flex: 1;
-    min-width: 200px;
-    max-width: 360px;
-  }
-
-  .search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-    font-size: 14px;
-  }
-
-  #search-input {
-    width: 100%;
-    padding: 9px 12px 9px 36px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.15s;
-  }
-
-  #search-input:focus { border-color: var(--accent); }
-  #search-input::placeholder { color: var(--muted); }
-
-  .filter-group {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-
-  .filter-btn {
-    padding: 7px 14px;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-weight: 500;
-  }
-
-  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,0,0,0.05); }
-
-  .nifty-toggle {
-    padding: 7px 14px;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    font-size: 12px;
-    font-family: 'DM Sans', sans-serif;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .nifty-toggle.active {
-    border-color: #000000;
-    color: #000000;
-    background: rgba(0,0,0,0.05);
-  }
-
-  .nifty-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: currentColor;
-  }
-
-  .main {
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 24px 24px;
-  }
-
-  .stats-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    padding: 10px 0;
-  }
-
-  .stats-text {
-    font-size: 12px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .refresh-btn {
-    font-size: 12px;
-    color: var(--accent);
-    background: none;
-    border: 1px solid rgba(184,134,11,0.3);
-    border-radius: 5px;
-    cursor: pointer;
-    font-family: 'DM Mono', monospace;
-    padding: 5px 10px;
-    transition: all 0.15s;
-  }
-
-  .refresh-btn:hover { background: rgba(0,0,0,0.05); }
-
-  .feed { display: flex; flex-direction: column; gap: 12px; }
-
-  .post-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px 20px;
-    transition: box-shadow 0.15s, border-color 0.15s;
-    animation: slideIn 0.25s ease;
-  }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .post-card:hover {
-    border-color: #CCCCCC;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  }
-
-  .post-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    gap: 12px;
-  }
-
-  .company-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.3;
-  }
-
-  .post-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
-  .post-time {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    white-space: nowrap;
-  }
-
-  .scrip-code {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 3px;
-  }
-
-  .post-body {
-    font-size: 13px;
-    color: #000000;
-    line-height: 1.65;
-    margin-bottom: 14px;
-  }
-
-  .post-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .post-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-
-  .tag {
-    font-size: 10px;
-    padding: 3px 9px;
-    border-radius: 4px;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-  }
-
-  .tag-result { background: rgba(0,0,0,0.05); color: #000000; border: 1px solid #CCCCCC; }
-  .tag-dividend { background: rgba(0,0,0,0.05); color: #000000; border: 1px solid #CCCCCC; }
-  .tag-bonus { background: rgba(0,0,0,0.05); color: #000000; border: 1px solid #CCCCCC; }
-  .tag-buyback { background: rgba(0,0,0,0.05); color: #000000; border: 1px solid rgba(0,0,0,0.2); }
-  .tag-order { background: rgba(0,0,0,0.05); color: #000000; border: 1px solid rgba(0,0,0,0.2); }
-  .tag-other { background: var(--tag-bg); color: var(--muted); border: 1px solid var(--border); }
-  .tag-nifty { background: rgba(0,0,0,0.05); color: #000000; border: 1px solid rgba(0,0,0,0.2); }
-
-  .loading {
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-  }
-
-  .spinner {
-    width: 28px; height: 28px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 16px;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .empty {
-    text-align: center;
-    padding: 80px 20px;
-  }
-
-  .empty h3 {
-    font-family: 'Playfair Display', serif;
-    color: var(--muted);
-    font-size: 22px;
-    margin-bottom: 8px;
-  }
-
-  .empty p { color: var(--muted); font-size: 13px; opacity: 0.7; }
-
-  .error-bar {
-    background: rgba(192,57,43,0.08);
-    border: 1px solid rgba(192,57,43,0.2);
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: var(--red);
-    font-family: 'DM Mono', monospace;
-    margin-bottom: 16px;
-  }
-
-  .load-more {
-    text-align: center;
-    padding: 20px;
-  }
-
-  .load-more-btn {
-    padding: 10px 24px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--surface);
-    color: var(--muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-
-  .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  .highlight { background: rgba(184,134,11,0.15); border-radius: 2px; padding: 0 2px; }
-
-  @media (max-width: 600px) {
-    header { padding: 0 16px; }
-    .controls { padding: 12px 16px; }
-    .main { padding: 16px; }
-    .company-name { font-size: 15px; }
-  }
+/* ── LOADING / EMPTY / ERROR ── */
+.loading-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto 14px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-icon { font-size: 36px; margin-bottom: 12px; }
+.empty-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.empty-sub { font-size: 13px; color: var(--muted); }
+.error-bar {
+  background: rgba(224,62,62,0.08);
+  border: 1px solid rgba(224,62,62,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--red);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 12px;
+}
+.load-more-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.15s;
+}
+.load-more-btn:active { transform: scale(0.98); }
+.highlight { background: rgba(255,200,0,0.35); border-radius: 2px; padding: 0 1px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <span class="logo">Market Pulse</span>
-    <span class="logo-sub">BSE/NSE Results & Alerts</span>
-  </div>
-  <div class="live-pill">
-    <div class="dot"></div>
-    LIVE
+  <div class="logo">Market Pulse</div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <button class="theme-btn" id="theme-btn" title="Toggle dark mode">🌙</button>
   </div>
 </header>
 
-<div class="controls">
-  <div class="search-wrap">
-    <span class="search-icon">🔍</span>
-    <input type="text" id="search-input" placeholder="Search company (e.g. Reliance, Infosys)..." autocomplete="off">
+<div class="search-section">
+  <div class="search-box">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="search-input" placeholder="Search company, e.g. Reliance…" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button id="search-clear" style="display:none;background:none;border:none;cursor:pointer;font-size:16px;color:var(--muted)">×</button>
   </div>
+</div>
 
-  <div class="filter-group" id="cat-filters">
-    <button class="filter-btn active" data-cat="all">All</button>
-    <button class="filter-btn" data-cat="result">Results</button>
-    <button class="filter-btn" data-cat="dividend">Dividend</button>
-    <button class="filter-btn" data-cat="bonus">Bonus</button>
-    <button class="filter-btn" data-cat="buyback">Buyback</button>
-    <button class="filter-btn" data-cat="order_win">Orders</button>
+<div class="filters-section">
+  <div class="filters-scroll">
+    <button class="filter-chip active" data-cat="all">All</button>
+    <button class="filter-chip" data-cat="result">Results</button>
+    <button class="filter-chip" data-cat="dividend">Dividend</button>
+    <button class="filter-chip" data-cat="bonus">Bonus</button>
+    <button class="filter-chip" data-cat="buyback">Buyback</button>
+    <button class="filter-chip" data-cat="order_win">Orders</button>
+    <button class="filter-chip nifty" data-nifty="true">⬤ Nifty 500</button>
+    <div class="date-tabs">
+      <button class="date-tab active" data-date="all">All</button>
+      <button class="date-tab" data-date="today">Today</button>
+      <button class="date-tab" data-date="week">Week</button>
+      <button class="date-tab" data-date="month">Month</button>
+    </div>
   </div>
-
-  <button class="nifty-toggle" id="nifty-toggle">
-    <span class="nifty-dot"></span>
-    Nifty 500 Only
-  </button>
 </div>
 
 <div class="main">
   <div class="stats-bar">
-    <span class="stats-text" id="stats-text">Loading...</span>
-    <button class="refresh-btn" onclick="loadPosts(true)">↻ Refresh</button>
+    <span class="stats-text" id="stats-text">Loading…</span>
+    <button class="refresh-btn" id="refresh-btn">↻ Refresh</button>
   </div>
-
-  <div id="error-bar" style="display:none" class="error-bar"></div>
+  <div id="error-bar" class="error-bar" style="display:none"></div>
   <div class="feed" id="feed">
-    <div class="loading"><div class="spinner"></div>Fetching latest announcements...</div>
+    <div class="loading-state"><div class="spinner"></div><div class="loading-text">Fetching announcements…</div></div>
   </div>
-  <div class="load-more" id="load-more" style="display:none">
-    <button class="load-more-btn" onclick="loadMore()">Load more</button>
+  <div id="load-more-wrap" style="display:none">
+    <button class="load-more-btn" id="load-more-btn">Load more</button>
   </div>
 </div>
 
 <script>
 const SUPABASE_URL = 'https://kbklmidusxqkbjgpsdlg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTU3MTcsImV4cCI6MjA5NTY5MTcxN30.D_zNYY3NX2we-hrfpPbB20iaNyrTKlIhYd6MX3LKJY4';
-
+const TG_CHANNEL_BSE = 'https://t.me/bsealertspro';
+const TG_CHANNEL_MP  = 'https://t.me/marketpulsealerts';
 const PAGE_SIZE = 30;
-let currentPage = 0;
-let allLoaded = false;
-let activeCategory = 'all';
-let niftyOnly = false;
-let searchQuery = '';
+
+let page = 0, allLoaded = false;
+let activeCat = 'all', niftyOnly = false, activeDateRange = 'all', searchQ = '';
 let searchTimer = null;
+const stockCache = {};
 
 const CAT_LABELS = {
-  result: 'Result', dividend: 'Dividend', bonus: 'Bonus',
-  buyback: 'Buyback', order_win: 'Order Win', auditor: 'Auditor',
-  agm: 'AGM', board_meeting: 'Board Meeting', other: 'Announcement'
+  result:'Result', dividend:'Dividend', bonus:'Bonus', buyback:'Buyback',
+  order_win:'Order Win', auditor:'Auditor', agm:'AGM', board_meeting:'Board Meeting', other:'Announcement'
 };
-
 const CAT_CLASSES = {
-  result: 'tag-result', dividend: 'tag-dividend', bonus: 'tag-bonus',
-  buyback: 'tag-buyback', order_win: 'tag-order', other: 'tag-other'
+  result:'tag-result', dividend:'tag-dividend', bonus:'tag-bonus',
+  buyback:'tag-buyback', order_win:'tag-order'
 };
 
+// ── THEME ──
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+let isDark = localStorage.getItem('theme') === 'dark' || (localStorage.getItem('theme') === null && prefersDark);
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
+}
+applyTheme();
+document.getElementById('theme-btn').addEventListener('click', () => {
+  isDark = !isDark;
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  applyTheme();
+});
+
+// ── TIME FORMAT ──
 function formatTime(ts) {
   if (!ts) return '';
   const d = new Date(ts);
-  const now = new Date();
-  const diff = Math.floor((now - d) / 1000);
+  const diff = Math.floor((Date.now() - d) / 1000);
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-  if (diff < 172800) return 'Yesterday ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-  return d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}) + ' ' + d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  if (diff < 172800) return 'Yesterday ' + d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
 }
 
-function highlight(text, query) {
-  if (!query || query.length < 2) return text;
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<span class="highlight">$1</span>');
+function hl(text, q) {
+  if (!q || q.length < 2 || !text) return text || '';
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return text.replace(new RegExp(`(${esc})`, 'gi'), '<span class="highlight">$1</span>');
 }
 
+// ── DATE RANGE FILTER ──
+function getDateFilter() {
+  const now = new Date();
+  if (activeDateRange === 'today') {
+    const start = new Date(now); start.setHours(0,0,0,0);
+    return `&date=gte.${start.toISOString()}`;
+  }
+  if (activeDateRange === 'week') {
+    const start = new Date(now - 7*86400000);
+    return `&date=gte.${start.toISOString()}`;
+  }
+  if (activeDateRange === 'month') {
+    const start = new Date(now - 30*86400000);
+    return `&date=gte.${start.toISOString()}`;
+  }
+  return '';
+}
+
+// ── STOCK PRICE (Yahoo Finance via proxy) ──
+async function fetchStock(symbol) {
+  if (!symbol) return null;
+  if (stockCache[symbol]) return stockCache[symbol];
+  try {
+    const ticker = symbol + '.NS';
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+    const r = await fetch(url, {signal: AbortSignal.timeout(4000)});
+    const d = await r.json();
+    const meta = d?.chart?.result?.[0]?.meta;
+    if (!meta) return null;
+    const price = meta.regularMarketPrice;
+    const prev = meta.chartPreviousClose;
+    const change = prev ? ((price - prev) / prev * 100) : 0;
+    const result = { price: price.toFixed(2), change: change.toFixed(2) };
+    stockCache[symbol] = result;
+    return result;
+  } catch { return null; }
+}
+
+// ── RENDER CARD ──
 function renderCard(post) {
   const catClass = CAT_CLASSES[post.category] || 'tag-other';
   const catLabel = CAT_LABELS[post.category] || 'Announcement';
-  const company = highlight(post.company_name || 'BSE Announcement', searchQuery);
-  const body = highlight((post.body || '').substring(0, 280), searchQuery);
+  const company = hl(post.company_name || 'BSE Announcement', searchQ);
+  const bodyText = post.text || '';
+  const bodyDisplay = hl(bodyText.substring(0, 300), searchQ);
+  const hasMore = bodyText.length > 300;
+  const id = 'card-' + post.id;
+  const tgLink = TG_CHANNEL_BSE;
 
   return `
-    <div class="post-card">
-      <div class="post-header">
-        <div>
-          <div class="company-name">${company}</div>
-          ${post.symbol ? `<div class="scrip-code">BSE: ${post.symbol}</div>` : ''}
-        </div>
-        <div class="post-meta">
-          <span class="post-time">${formatTime(post.date)}</span>
-        </div>
+    <div class="post-card" id="${id}">
+      <div class="card-top">
+        <div class="company-name">${company}</div>
+        <span class="card-time">${formatTime(post.date)}</span>
       </div>
-      <div class="post-body">${body}${(post.body||'').length > 280 ? '...' : ''}</div>
-      <div class="post-footer">
-        <div class="post-tags">
+      ${bodyText ? `
+      <div class="card-body" id="body-${id}">${bodyDisplay}${hasMore ? '…' : ''}</div>
+      ` : ''}
+      <div class="card-footer">
+        <div class="tags">
           <span class="tag ${catClass}">${catLabel}</span>
           ${post.is_nifty500 ? '<span class="tag tag-nifty">Nifty 500</span>' : ''}
+        </div>
+        <div class="card-actions">
+          <span class="stock-price" id="price-${id}" style="display:none"></span>
+          ${hasMore ? `<button class="action-btn expand-btn" onclick="toggleExpand('${id}')">▼ More</button>` : ''}
+          <a class="action-btn" href="${tgLink}" target="_blank" rel="noopener">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+            View
+          </a>
         </div>
       </div>
     </div>
   `;
 }
 
-async function fetchPosts(reset = false) {
-  if (reset) {
-    currentPage = 0;
-    allLoaded = false;
-  }
+function toggleExpand(id) {
+  const body = document.getElementById('body-' + id);
+  const btn = document.querySelector(`#${id} .expand-btn`);
+  if (!body) return;
+  body.classList.toggle('expanded');
+  btn.textContent = body.classList.contains('expanded') ? '▲ Less' : '▼ More';
+}
 
-  const from = currentPage * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
-
-  let url = `${SUPABASE_URL}/rest/v1/posts?select=*&order=date.desc&limit=${PAGE_SIZE}&offset=${from}`;
-
-  if (activeCategory !== 'all') url += `&category=eq.${activeCategory}`;
-  if (niftyOnly) url += `&is_nifty500=eq.true`;
-  if (searchQuery.length >= 2) {
-    url += `&or=(company_name.ilike.*${encodeURIComponent(searchQuery)}*,body.ilike.*${encodeURIComponent(searchQuery)}*,symbol.ilike.*${encodeURIComponent(searchQuery)}*)`;
-  }
-
-  const resp = await fetch(url, {
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Range-Unit': 'items',
+// Load stock prices for visible cards lazily
+async function loadStockPrices(posts) {
+  for (const post of posts) {
+    if (!post.company_name) continue;
+    // Try to extract NSE symbol from text
+    const m = (post.text||'').match(/NSE[:\s]+([A-Z]+)/i) || (post.text||'').match(/\b([A-Z]{3,10})\b/);
+    const sym = m ? m[1] : null;
+    if (!sym) continue;
+    const id = 'card-' + post.id;
+    const el = document.getElementById('price-' + id);
+    if (!el) continue;
+    const stock = await fetchStock(sym);
+    if (stock) {
+      const dir = parseFloat(stock.change) >= 0 ? 'up' : 'down';
+      const arrow = parseFloat(stock.change) >= 0 ? '▲' : '▼';
+      el.textContent = `₹${stock.price} ${arrow}${Math.abs(stock.change)}%`;
+      el.className = `stock-price ${dir}`;
+      el.style.display = '';
     }
-  });
+  }
+}
 
+// ── FETCH ──
+async function fetchPosts(reset = false) {
+  if (reset) { page = 0; allLoaded = false; }
+  const from = page * PAGE_SIZE;
+  let url = `${SUPABASE_URL}/rest/v1/posts?select=*&order=date.desc&limit=${PAGE_SIZE}&offset=${from}`;
+  if (activeCat !== 'all') url += `&category=eq.${activeCat}`;
+  if (niftyOnly) url += `&is_nifty500=eq.true`;
+  url += getDateFilter();
+  if (searchQ.length >= 2) {
+    url += `&or=(company_name.ilike.*${encodeURIComponent(searchQ)}*,text.ilike.*${encodeURIComponent(searchQ)}*)`;
+  }
+  const resp = await fetch(url, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
   if (!resp.ok) throw new Error(`Supabase error: ${resp.status}`);
   const posts = await resp.json();
   if (posts.length < PAGE_SIZE) allLoaded = true;
   return posts;
 }
 
+// ── RENDER ──
 async function loadPosts(reset = false) {
+  const feed = document.getElementById('feed');
+  const errBar = document.getElementById('error-bar');
   if (reset) {
-    document.getElementById('feed').innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
-    document.getElementById('load-more').style.display = 'none';
-    document.getElementById('error-bar').style.display = 'none';
+    feed.innerHTML = '<div class="loading-state"><div class="spinner"></div><div class="loading-text">Loading…</div></div>';
+    document.getElementById('load-more-wrap').style.display = 'none';
+    errBar.style.display = 'none';
   }
-
-  document.getElementById('stats-text').textContent = 'Loading...';
-
+  document.getElementById('stats-text').textContent = 'Loading…';
   try {
     const posts = await fetchPosts(reset);
-
     if (reset) {
       if (posts.length === 0) {
-        document.getElementById('feed').innerHTML = `
-          <div class="empty">
-            <h3>No posts found</h3>
-            <p>${searchQuery ? 'Try a different search term.' : 'Posts will appear here as BSE announcements come in.'}</p>
-          </div>`;
+        feed.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">No posts yet</div><div class="empty-sub">${searchQ ? 'Try a different search.' : 'Announcements will appear here as they come in.'}</div></div>`;
         document.getElementById('stats-text').textContent = '0 posts';
         return;
       }
-      document.getElementById('feed').innerHTML = posts.map(renderCard).join('');
+      feed.innerHTML = posts.map(renderCard).join('');
     } else {
-      document.getElementById('feed').innerHTML += posts.map(renderCard).join('');
+      feed.innerHTML += posts.map(renderCard).join('');
     }
-
-    currentPage++;
-    document.getElementById('load-more').style.display = allLoaded ? 'none' : 'block';
-    document.getElementById('stats-text').textContent = `Showing posts · Updated ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})}`;
-
+    page++;
+    document.getElementById('load-more-wrap').style.display = allLoaded ? 'none' : 'block';
+    const t = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('stats-text').textContent = `Updated ${t}`;
+    loadStockPrices(posts);
   } catch(e) {
-    document.getElementById('error-bar').textContent = 'Failed to load: ' + e.message;
-    document.getElementById('error-bar').style.display = 'block';
+    errBar.textContent = 'Failed to load: ' + e.message;
+    errBar.style.display = 'block';
     document.getElementById('stats-text').textContent = 'Error';
-    if (reset) document.getElementById('feed').innerHTML = '';
+    if (reset) feed.innerHTML = '';
   }
 }
 
-function loadMore() {
-  loadPosts(false);
-}
-
-// ── SEARCH ──
+// ── EVENTS ──
 document.getElementById('search-input').addEventListener('input', e => {
   clearTimeout(searchTimer);
-  searchQuery = e.target.value.trim();
-  searchTimer = setTimeout(() => loadPosts(true), 400);
+  searchQ = e.target.value.trim();
+  document.getElementById('search-clear').style.display = searchQ ? 'block' : 'none';
+  searchTimer = setTimeout(() => loadPosts(true), 350);
 });
-
-// ── CATEGORY FILTER ──
-document.getElementById('cat-filters').addEventListener('click', e => {
-  if (!e.target.classList.contains('filter-btn')) return;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  e.target.classList.add('active');
-  activeCategory = e.target.dataset.cat;
+document.getElementById('search-clear').addEventListener('click', () => {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').style.display = 'none';
+  searchQ = '';
   loadPosts(true);
 });
 
-// ── NIFTY TOGGLE ──
-document.getElementById('nifty-toggle').addEventListener('click', () => {
-  niftyOnly = !niftyOnly;
-  document.getElementById('nifty-toggle').classList.toggle('active', niftyOnly);
-  loadPosts(true);
+document.querySelectorAll('.filter-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.nifty) {
+      niftyOnly = !niftyOnly;
+      btn.classList.toggle('active', niftyOnly);
+    } else {
+      document.querySelectorAll('.filter-chip:not([data-nifty])').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeCat = btn.dataset.cat;
+    }
+    loadPosts(true);
+  });
 });
 
-// ── AUTO REFRESH every 5 mins ──
+document.querySelectorAll('.date-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.date-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeDateRange = btn.dataset.date;
+    loadPosts(true);
+  });
+});
+
+document.getElementById('refresh-btn').addEventListener('click', () => loadPosts(true));
+document.getElementById('load-more-btn').addEventListener('click', () => loadPosts(false));
+
+// Auto refresh every 5 mins
 setInterval(() => loadPosts(true), 300000);
 
-// ── INIT ──
+// Init
 loadPosts(true);
 </script>
 </body>
