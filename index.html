@@ -481,7 +481,7 @@ function renderCard(post) {
           ${post.symbol ? `<div class="scrip-code">BSE: ${post.symbol}</div>` : ''}
         </div>
         <div class="post-meta">
-          <span class="post-time">${formatTime(post.posted_at)}</span>
+          <span class="post-time">${formatTime(post.date)}</span>
         </div>
       </div>
       <div class="post-body">${body}${(post.body||'').length > 280 ? '...' : ''}</div>
@@ -504,7 +504,7 @@ async function fetchPosts(reset = false) {
   const from = currentPage * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  let url = `${SUPABASE_URL}/rest/v1/posts?select=*&order=posted_at.desc&limit=${PAGE_SIZE}&offset=${from}`;
+  let url = `${SUPABASE_URL}/rest/v1/posts?select=*&order=date.desc&limit=${PAGE_SIZE}&offset=${from}`;
 
   if (activeCategory !== 'all') url += `&category=eq.${activeCategory}`;
   if (niftyOnly) url += `&is_nifty500=eq.true`;
