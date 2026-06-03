@@ -203,7 +203,7 @@ function renderCard(post) {
   var catClass = CAT_CLASSES[post.category] || '';
   var catLabel = CAT_LABELS[post.category] || 'Announcement';
   var company = hl(post.company_name || 'BSE Announcement', searchQ);
-  var bodyText = post.text || '';
+  var bodyText = (post.text || '').replace(/\*+/g, '').trim();
   var bodyDisplay = hl(bodyText.substring(0, 400), searchQ);
   var hasMore = bodyText.length > 400;
   var id = 'c' + post.id;
