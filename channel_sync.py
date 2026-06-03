@@ -6,7 +6,7 @@ import requests
 
 # ── SETTINGS ──
 BOT_TOKEN    = "8795975670:AAHMXeEMBIhtDJ6Yu1i6IQe6N_R4rQ7QLp8"
-CHANNEL_ID   = "-1003806349868"
+CHANNEL_IDS  = ["-1003806349868", "-1003975218278"]
 SUPABASE_URL = "https://kbklmidusxqkbjgpsdlg.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDExNTcxNywiZXhwIjoyMDk1NjkxNzE3fQ.v-gWV939rbNfNSXxzSbzaGduDXvxFhB8f_MHEp0wlFY"
 CSV_FILE     = "ind_nifty500list.csv"
@@ -129,7 +129,7 @@ def fetch_updates(offset):
 # ── PROCESS MESSAGE ──
 def process_message(msg):
     chat_id = msg.get("chat", {}).get("id")
-    if str(chat_id) != CHANNEL_ID:
+    if str(chat_id) not in CHANNEL_IDS:
         return
 
     message_id = msg.get("message_id")
