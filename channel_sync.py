@@ -91,11 +91,11 @@ def extract_filing_url(msg):
         pass
     return None
 
-def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price, price_change, filing_url):
+def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price, price_change, filing_url, msg_date=None):
     record = {
         "message_id": message_id,
         "text": text,
-        "date": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "date": msg_date or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "company_name": company,
         "scrip_code": scrip,
         "category": category,
@@ -141,6 +141,8 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
             nifty = is_nifty500(company) if company else False
             price, price_change = extract_price(clean)
             filing_url = extract_filing_url(msg)
+            # Use message's actual timestamp
+            msg_date = msg.date.strftime("%Y-%m-%dT%H:%M:%SZ") if msg.date else time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
             save_to_supabase(
                 message_id=msg.id,
                 text=clean,
@@ -150,7 +152,8 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
                 is_nifty=nifty,
                 price=price,
                 price_change=price_change,
-                filing_url=filing_url
+                filing_url=filing_url,
+                msg_date=msg_date
             )
         except Exception as e:
             print(f"Handler error: {e}")
