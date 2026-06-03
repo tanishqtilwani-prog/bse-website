@@ -4,6 +4,7 @@ import time
 import csv
 import requests
 from telethon.sync import TelegramClient, events
+from telethon.tl.types import MessageEntityUrl, MessageEntityTextUrl
 
 # ── SETTINGS ──
 API_ID       = 21598306
@@ -50,21 +51,47 @@ def detect_category(text):
 def extract_company(text):
     match = re.search(r'^(.+?)\s*\(\d{6}\)', text.strip(), re.MULTILINE)
     if match:
-        return match.group(1).strip()
-    lines = text.strip().split('\n')
-    return lines[0].strip() if lines else None
+        name = match.group(1).strip()
+    else:
+        lines = text.strip().split('\n')
+        name = lines[0].strip() if lines else None
+    if name:
+        name = re.sub(r'\*+', '', name).strip()
+    return name
 
 def extract_scrip(text):
     match = re.search(r'\((\d{6})\)', text)
     return match.group(1) if match else None
 
 def extract_price(text):
-    match = re.search(r'Price[:\s]+[₹Rs.]*\s*([\d,.]+)\s*([+-][\d.]+%)', text, re.IGNORECASE)
+    match = re.search(r'Price[:\s]+[^\d]*([\d,.]+)\s*([+-][\d.]+%)', text, re.IGNORECASE)
     if match:
         return match.group(1).replace(',', ''), match.group(2)
     return None, None
 
-def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price, price_change):
+def extract_filing_url(msg):
+    # Check inline keyboard buttons (View Filing button)
+    try:
+        if msg.reply_markup:
+            for row in msg.reply_markup.rows:
+                for btn in row.buttons:
+                    if hasattr(btn, 'url') and btn.url:
+                        return btn.url
+    except:
+        pass
+    # Check message entities for URLs
+    try:
+        if msg.entities:
+            for ent in msg.entities:
+                if isinstance(ent, MessageEntityTextUrl):
+                    return ent.url
+                if isinstance(ent, MessageEntityUrl) and msg.text:
+                    return msg.text[ent.offset:ent.offset+ent.length]
+    except:
+        pass
+    return None
+
+def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price, price_change, filing_url):
     record = {
         "message_id": message_id,
         "text": text,
@@ -75,6 +102,7 @@ def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price
         "is_nifty500": is_nifty,
         "price": price,
         "price_change": price_change,
+        "filing_url": filing_url,
     }
     try:
         resp = requests.post(
@@ -91,7 +119,7 @@ def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price
         if resp.status_code not in (200, 201):
             print(f"Supabase error {resp.status_code}: {resp.text[:200]}")
         else:
-            print(f"Saved: {company} | {category} | price={price}")
+            print(f"Saved: {company} | {category} | price={price} | filing={'yes' if filing_url else 'no'}")
     except Exception as e:
         print(f"Supabase failed: {e}")
 
@@ -112,6 +140,7 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
             category = detect_category(clean)
             nifty = is_nifty500(company) if company else False
             price, price_change = extract_price(clean)
+            filing_url = extract_filing_url(msg)
             save_to_supabase(
                 message_id=msg.id,
                 text=clean,
@@ -120,7 +149,8 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
                 category=category,
                 is_nifty=nifty,
                 price=price,
-                price_change=price_change
+                price_change=price_change,
+                filing_url=filing_url
             )
         except Exception as e:
             print(f"Handler error: {e}")
