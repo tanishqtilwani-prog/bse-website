@@ -3,7 +3,7 @@ import re
 import time
 import csv
 import requests
-from telethon import TelegramClient, events
+from telethon.sync import TelegramClient, events
 
 # ── SETTINGS ──
 API_ID       = 21598306
@@ -95,41 +95,35 @@ def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price
     except Exception as e:
         print(f"Supabase failed: {e}")
 
-# ── TELETHON CLIENT ──
-client = TelegramClient(SESSION_FILE, API_ID, API_HASH)
-
-@client.on(events.NewMessage(chats=CHANNEL_IDS))
-async def handler(event):
-    try:
-        msg = event.message
-        text = msg.text or msg.message or ""
-        if not text.strip():
-            return
-
-        clean = re.sub(r'<[^>]+>', '', text).strip()
-        company = extract_company(clean)
-        scrip = extract_scrip(clean)
-        category = detect_category(clean)
-        nifty = is_nifty500(company) if company else False
-        price, price_change = extract_price(clean)
-
-        save_to_supabase(
-            message_id=msg.id,
-            text=clean,
-            company=company,
-            scrip=scrip,
-            category=category,
-            is_nifty=nifty,
-            price=price,
-            price_change=price_change
-        )
-    except Exception as e:
-        print(f"Handler error: {e}")
-
-async def main():
+# ── MAIN ──
+with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
     print("BSE Channel Sync (Telethon) started!")
-    await client.start()
-    print("Logged in! Listening for messages...")
-    await client.run_until_disconnected()
 
-asyncio.run(main())
+    @client.on(events.NewMessage(chats=CHANNEL_IDS))
+    async def handler(event):
+        try:
+            msg = event.message
+            text = msg.text or msg.message or ""
+            if not text.strip():
+                return
+            clean = re.sub(r'<[^>]+>', '', text).strip()
+            company = extract_company(clean)
+            scrip = extract_scrip(clean)
+            category = detect_category(clean)
+            nifty = is_nifty500(company) if company else False
+            price, price_change = extract_price(clean)
+            save_to_supabase(
+                message_id=msg.id,
+                text=clean,
+                company=company,
+                scrip=scrip,
+                category=category,
+                is_nifty=nifty,
+                price=price,
+                price_change=price_change
+            )
+        except Exception as e:
+            print(f"Handler error: {e}")
+
+    print("Logged in! Listening for messages...")
+    client.run_until_disconnected()
