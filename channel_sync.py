@@ -137,6 +137,7 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
             clean = re.sub(r'<[^>]+>', '', text).strip()
             company = extract_company(clean)
             scrip = extract_scrip(clean)
+            clean = clean_body(clean, company, scrip)
             category = detect_category(clean)
             nifty = is_nifty500(company) if company else False
             price, price_change = extract_price(clean)
