@@ -48,6 +48,19 @@ def detect_category(text):
     if "result" in t or "revenue" in t or "profit" in t: return "result"
     return "other"
 
+def clean_body(text, company, scrip):
+    # Strip asterisks
+    text = re.sub(r'\*+', '', text)
+    # Remove redundant first line containing scrip code
+    if scrip:
+        lines = text.strip().split('
+')
+        if lines and scrip in lines[0]:
+            lines = lines[1:]
+            text = '
+'.join(lines).strip()
+    return text.strip()
+
 def extract_company(text):
     match = re.search(r'^(.+?)\s*\(\d{6}\)', text.strip(), re.MULTILINE)
     if match:
@@ -135,6 +148,9 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
             if not text.strip():
                 return
             clean = re.sub(r'<[^>]+>', '', text).strip()
+            # Skip bot startup/status messages
+            if any(skip in clean.lower() for skip in ['is now running', 'bot started', 'monitoring top']):
+                return
             company = extract_company(clean)
             scrip = extract_scrip(clean)
             clean = clean_body(clean, company, scrip)
