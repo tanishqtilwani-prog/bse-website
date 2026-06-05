@@ -1,4 +1,3 @@
-import asyncio
 import re
 import time
 import csv
@@ -6,7 +5,6 @@ import requests
 from telethon.sync import TelegramClient, events
 from telethon.tl.types import MessageEntityUrl, MessageEntityTextUrl
 
-# ── SETTINGS ──
 API_ID       = 21598306
 API_HASH     = "3620b1fbc6c9559c410cf44d596a263b"
 SESSION_FILE = "/home/ubuntu/bse-website/tg_session"
@@ -15,7 +13,6 @@ SUPABASE_URL = "https://kbklmidusxqkbjgpsdlg.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDExNTcxNywiZXhwIjoyMDk1NjkxNzE3fQ.v-gWV939rbNfNSXxzSbzaGduDXvxFhB8f_MHEp0wlFY"
 CSV_FILE     = "/home/ubuntu/bse-website/ind_nifty500list.csv"
 
-# ── LOAD NIFTY 500 ──
 NIFTY500_NAMES = set()
 try:
     with open(CSV_FILE, "r") as f:
@@ -48,17 +45,13 @@ def detect_category(text):
     if "result" in t or "revenue" in t or "profit" in t: return "result"
     return "other"
 
-def clean_body(text, company, scrip):
-    # Strip asterisks
+def clean_body(text, scrip):
     text = re.sub(r'\*+', '', text)
-    # Remove redundant first line containing scrip code
     if scrip:
-        lines = text.strip().split('
-')
+        lines = text.strip().splitlines()
         if lines and scrip in lines[0]:
             lines = lines[1:]
-            text = '
-'.join(lines).strip()
+            text = '\n'.join(lines).strip()
     return text.strip()
 
 def extract_company(text):
@@ -66,7 +59,7 @@ def extract_company(text):
     if match:
         name = match.group(1).strip()
     else:
-        lines = text.strip().split('\n')
+        lines = text.strip().splitlines()
         name = lines[0].strip() if lines else None
     if name:
         name = re.sub(r'\*+', '', name).strip()
@@ -83,7 +76,6 @@ def extract_price(text):
     return None, None
 
 def extract_filing_url(msg):
-    # Check inline keyboard buttons (View Filing button)
     try:
         if msg.reply_markup:
             for row in msg.reply_markup.rows:
@@ -92,7 +84,6 @@ def extract_filing_url(msg):
                         return btn.url
     except:
         pass
-    # Check message entities for URLs
     try:
         if msg.entities:
             for ent in msg.entities:
@@ -136,7 +127,6 @@ def save_to_supabase(message_id, text, company, scrip, category, is_nifty, price
     except Exception as e:
         print(f"Supabase failed: {e}")
 
-# ── MAIN ──
 with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
     print("BSE Channel Sync (Telethon) started!")
 
@@ -148,18 +138,16 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
             if not text.strip():
                 return
             clean = re.sub(r'<[^>]+>', '', text).strip()
-            # Skip bot startup/status messages
             if any(skip in clean.lower() for skip in ['is now running', 'bot started', 'monitoring top']):
                 return
             company = extract_company(clean)
             scrip = extract_scrip(clean)
-            clean = clean_body(clean, company, scrip)
+            clean = clean_body(clean, scrip)
             category = detect_category(clean)
             nifty = is_nifty500(company) if company else False
             price, price_change = extract_price(clean)
             filing_url = extract_filing_url(msg)
-            # Use message's actual timestamp
-            msg_date = msg.date.strftime("%Y-%m-%dT%H:%M:%SZ") if msg.date else time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            msg_date = msg.date.strftime("%Y-%m-%dT%H:%M:%SZ") if msg.date else None
             save_to_supabase(
                 message_id=msg.id,
                 text=clean,
