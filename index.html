@@ -137,7 +137,8 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
   <div class="filters-wrap">
     <div class="filters-scroll" id="filters-scroll">
       <button class="filter-chip active" data-cat="all">All</button>
-      <button class="filter-chip nifty" id="nifty-chip">⬤ Nifty 500</button>
+      <button class="filter-chip nifty" id="nifty100-chip" data-index="nifty100">⬤ Nifty 100</button>
+      <button class="filter-chip nifty" id="niftytotal-chip" data-index="niftytotal">⬤ Nifty Total Mkt</button>
       <button class="filter-chip" data-cat="result">Results</button>
       <button class="filter-chip" data-cat="dividend">Dividend</button>
       <button class="filter-chip" data-cat="bonus">Bonus</button>
@@ -184,7 +185,7 @@ const SUPABASE_URL = 'https://kbklmidusxqkbjgpsdlg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTU3MTcsImV4cCI6MjA5NTY5MTcxN30.D_zNYY3NX2we-hrfpPbB20iaNyrTKlIhYd6MX3LKJY4';
 const PAGE_SIZE = 30;
 let page = 0, allLoaded = false;
-let activeCat = 'all', niftyOnly = false, activeDateRange = 'all', searchQ = '';
+let activeCat = 'all', activeIndex = null, activeDateRange = 'all', searchQ = '';
 let searchTimer = null;
 
 const CAT_LABELS = {result:'Result',dividend:'Dividend',bonus:'Bonus',buyback:'Buyback',order_win:'Order Win',auditor:'Auditor',agm:'AGM',board_meeting:'Board Meeting',acquisition:'Acquisition',other:'Announcement'};
@@ -274,7 +275,7 @@ function renderCard(post) {
     '<div class="card-footer">' +
       '<div class="tags">' +
         '<span class="tag ' + catClass + '">' + catLabel + '</span>' +
-        (post.is_nifty500 ? '<span class="tag tag-nifty">Nifty 500</span>' : '') +
+        (post.is_nifty100 ? '<span class="tag tag-nifty">Nifty 100</span>' : (post.is_niftytotal ? '<span class="tag tag-nifty" style="background:#0369a1;border-color:#0369a1">Total Mkt</span>' : '')) +
         (post.scrip_code ? '<span class="tag">' + post.scrip_code + '</span>' : '') +
         priceHtml +
       '</div>' +
@@ -296,7 +297,8 @@ async function fetchPosts(reset) {
   var from = page * PAGE_SIZE;
   var url = SUPABASE_URL + '/rest/v1/posts?select=*&order=date.desc&limit=' + PAGE_SIZE + '&offset=' + from;
   if (activeCat !== 'all') url += '&category=eq.' + activeCat;
-  if (niftyOnly) url += '&is_nifty500=eq.true';
+  if (activeIndex === 'nifty100') url += '&is_nifty100=eq.true';
+  if (activeIndex === 'niftytotal') url += '&is_niftytotal=eq.true';
   url += getDateFilter();
   if (searchQ.length >= 2) url += '&or=(company_name.ilike.*' + encodeURIComponent(searchQ) + '*,text.ilike.*' + encodeURIComponent(searchQ) + '*)';
   var resp = await fetch(url, {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
@@ -372,9 +374,17 @@ document.getElementById('search-clear').addEventListener('click', function() {
 // Filters
 document.querySelectorAll('.filter-chip').forEach(function(btn) {
   btn.addEventListener('click', function() {
-    if (btn.id === 'nifty-chip') {
-      niftyOnly = !niftyOnly;
-      btn.classList.toggle('active', niftyOnly);
+    if (btn.dataset.index) {
+      var idx = btn.dataset.index;
+      if (activeIndex === idx) {
+        activeIndex = null;
+        btn.classList.remove('active');
+      } else {
+        activeIndex = idx;
+        document.querySelectorAll('.filter-chip[data-index]').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+      }
+      loadPosts(true);
     } else {
       document.querySelectorAll('.filter-chip:not(#nifty-chip)').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
