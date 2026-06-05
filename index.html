@@ -526,7 +526,7 @@ function valClass(verdict) {
 function renderPulse(d) {
   var mood = d.overall_mood || 'Neutral';
   var greenCount = [d.vix_verdict, d.pcr_verdict, d.nifty_trend_verdict, d.fii_verdict, d.dii_verdict, d.ad_ratio_verdict, d.fii_futures_verdict, d.breadth_verdict].filter(function(v) { return dotClass(v) === 'sig-green'; }).length;
-  var updated = d.date ? new Date(d.date.endsWith('Z') ? d.date : d.date + 'Z').toLocaleString('en-IN', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  var updated = ''; if (d.date) { try { var _d = new Date(d.date.replace(' ','T')); updated = _d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_d.getMonth()] + ', ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0'); } catch(e){} }
 
   function sig(name, desc, val, unit, verdict, sub) {
     return '<div class="signal-row"><div><div class="signal-name">' + name + '</div><div class="signal-desc">' + desc + '</div></div><div class="signal-right"><div><div class="signal-val ' + valClass(verdict) + '">' + (val || '—') + (unit ? ' ' + unit : '') + '</div><div class="signal-verdict">' + (sub || '') + '</div></div><div class="sig-dot ' + dotClass(verdict) + '"></div></div></div>';
@@ -636,7 +636,7 @@ function renderDerivContent(d) {
   var pcrLabel = d.pcr < 0.7 ? 'Market greedy — bearish signal' : d.pcr > 1.2 ? 'Market fearful — bullish signal' : 'Neutral zone';
   var premLabel = d.futures_premium > 0 ? 'Contango — healthy' : 'Backwardation — weak';
   var fiiLabel = d.fii_long_pct > 55 ? 'Bullish positioning' : d.fii_long_pct < 45 ? 'Bearish positioning' : 'Neutral positioning';
-  var updated = d.date ? new Date(d.date.endsWith('Z') ? d.date : d.date + 'Z').toLocaleString('en-IN', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  var updated = ''; if (d.date) { try { var _d = new Date(d.date.replace(' ','T')); updated = _d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_d.getMonth()] + ', ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0'); } catch(e){} }
 
   var oi_rows = '';
   if (d.top_oi_strikes && Array.isArray(d.top_oi_strikes)) {
