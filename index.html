@@ -151,22 +151,17 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 .banner-item{text-align:center}
 .banner-label{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
 .banner-value{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.5px}
-.sector-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.sector-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 13px;box-shadow:var(--shadow);transition:border-color .2s}
-.sector-card.strong{border-color:rgba(22,163,74,.35);background:rgba(22,163,74,.03)}
-.sector-card.weak{border-color:rgba(224,62,62,.3);background:rgba(224,62,62,.03)}
-[data-theme="dark"] .sector-card.strong{background:rgba(22,163,74,.06)}
-[data-theme="dark"] .sector-card.weak{background:rgba(224,62,62,.05)}
-.sector-name{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;margin-bottom:2px}
-.sector-status{font-size:10px;font-weight:500;margin-bottom:7px}
-.status-strong{color:#16a34a}
-.status-neutral{color:#d97706}
-.status-weak{color:var(--red)}
-.score-bar-bg{height:3px;background:var(--border);border-radius:2px;margin-bottom:6px}
-.score-bar{height:3px;border-radius:2px;transition:width .6s ease}
-.sector-stats{display:flex;justify-content:space-between;align-items:center}
-.sector-change{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500}
-.sector-rsi{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.sector-signal-list{display:flex;flex-direction:column;gap:1px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.sector-sig-row{display:flex;align-items:center;padding:10px 14px;background:var(--card);gap:10px;transition:background .1s}
+.sector-sig-row:hover{background:var(--surface)}
+.sig-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sig-dot-g{background:#16a34a}
+.sig-dot-r{background:var(--red)}
+.sig-dot-a{background:#d97706}
+.sector-sig-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;flex:1;color:var(--text)}
+.sector-sig-rsi{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.sector-sig-change{font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:500;flex-shrink:0;min-width:48px;text-align:right}
+.sector-sig-arrow{font-size:14px;flex-shrink:0;width:14px;text-align:center}
 .sectors-loading{text-align:center;padding:60px 20px;color:var(--muted)}
 .last-updated{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:center;padding:10px 0 4px}
 
@@ -570,24 +565,34 @@ function renderSectors(rows) {
   var fii = rows[0] ? rows[0].fii_weekly : null;
   var dii = rows[0] ? rows[0].dii_weekly : null;
   var vix = rows[0] ? rows[0].vix : null;
-  var updated = rows[0] && rows[0].date ? new Date(rows[0].date.endsWith('Z') ? rows[0].date : rows[0].date + 'Z').toLocaleDateString('en-IN', {day:'numeric',month:'short'}) : '';
+  var updated = rows[0] && rows[0].date ? new Date(rows[0].date.replace(' ','T')).toLocaleDateString('en-IN', {day:'numeric',month:'short'}) : '';
 
   var banner = '<div class="fii-banner"><div class="banner-item"><div class="banner-label">FII this week</div><div class="banner-value ' + (fii && fii > 0 ? 'val-green' : 'val-red') + '">' + (fii ? (fii > 0 ? '+' : '') + '₹' + Math.abs(fii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">DII this week</div><div class="banner-value ' + (dii && dii > 0 ? 'val-green' : 'val-red') + '">' + (dii ? (dii > 0 ? '+' : '') + '₹' + Math.abs(dii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">India VIX</div><div class="banner-value ' + (vix ? (vix < 15 ? 'val-green' : vix < 20 ? 'val-amber' : 'val-red') : 'val-muted') + '">' + (vix || '—') + '</div></div></div>';
 
-  var cards = rows.map(function(s) {
-    var score = s.score || 0;
-    var pct = Math.min(100, Math.max(0, score));
-    var cls = score >= 60 ? 'strong' : score <= 35 ? 'weak' : '';
-    var statusCls = score >= 60 ? 'status-strong' : score <= 35 ? 'status-weak' : 'status-neutral';
-    var statusLabel = score >= 60 ? 'Strong' : score <= 35 ? 'Weak' : 'Neutral';
-    var barColor = score >= 60 ? '#16a34a' : score <= 35 ? '#e03e3e' : '#d97706';
+  // Sort by score descending
+  var sorted = rows.slice().sort(function(a,b){ return (b.score||50) - (a.score||50); });
+
+  var rows_html = sorted.map(function(s) {
+    var score = s.score || 50;
     var chg = s.weekly_change_vs_nifty;
-    var chgStr = chg !== null && chg !== undefined ? (chg >= 0 ? '+' : '') + chg.toFixed(1) + '% vs Nifty' : '—';
-    var chgCls = chg >= 0 ? 'val-green' : 'val-red';
-    return '<div class="sector-card ' + cls + '"><div class="sector-name">' + (s.sector || '—') + '</div><div class="sector-status ' + statusCls + '">' + statusLabel + '</div><div class="score-bar-bg"><div class="score-bar" style="width:' + pct + '%;background:' + barColor + '"></div></div><div class="sector-stats"><span class="sector-change ' + chgCls + '">' + chgStr + '</span><span class="sector-rsi">RSI ' + (s.rsi ? s.rsi.toFixed(0) : '—') + '</span></div></div>';
+    var chgStr = chg !== null && chg !== undefined ? (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%' : '—';
+    var dotCls = score >= 60 ? 'sig-dot-g' : score <= 35 ? 'sig-dot-r' : 'sig-dot-a';
+    var chgCls = chg > 0 ? 'val-green' : chg < 0 ? 'val-red' : 'val-amber';
+    var arrow = chg > 0.5 ? '↑' : chg < -0.5 ? '↓' : '→';
+    var arrowColor = chg > 0.5 ? '#16a34a' : chg < -0.5 ? 'var(--red)' : '#d97706';
+    var rsi = s.rsi ? 'RSI ' + s.rsi.toFixed(0) : '—';
+    return '<div class="sector-sig-row">' +
+      '<span class="sig-dot ' + dotCls + '"></span>' +
+      '<span class="sector-sig-name">' + (s.sector || '—') + '</span>' +
+      '<span class="sector-sig-rsi">' + rsi + '</span>' +
+      '<span class="sector-sig-change ' + chgCls + '">' + chgStr + '</span>' +
+      '<span class="sector-sig-arrow" style="color:' + arrowColor + '">' + arrow + '</span>' +
+    '</div>';
   }).join('');
 
-  return banner + '<div class="section-title">Sector strength</div><div class="sector-grid">' + cards + '</div><div class="last-updated">Updated ' + updated + ' · Score = momentum + RSI + breadth + bulk deals</div>';
+  return banner + '<div class="section-title">Sector strength — ranked</div>' +
+    '<div class="sector-signal-list">' + rows_html + '</div>' +
+    '<div class="last-updated">Updated ' + updated + ' · sorted strongest → weakest vs Nifty</div>';
 }
 
 function renderSectorsNoData() {
