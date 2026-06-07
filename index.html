@@ -18,7 +18,7 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-h
 
 /* ── HEADER ── */
 header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.logo-wrap{display:flex;flex-direction:column;justify-content:center}
+.logo-wrap{display:flex;flex-direction:row;align-items:center;gap:10px}
 .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.5px;line-height:1.2}
 .logo-sub{font-size:10px;color:var(--muted);font-weight:400;letter-spacing:.2px;margin-top:1px}
 .header-right{display:flex;align-items:center;gap:10px}
@@ -199,21 +199,65 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 .range-resist{color:var(--red)}
 .range-maxpain{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:center;margin-top:4px}
 </style>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6638620338918644"
-     crossorigin="anonymous"></script>
 </head>
 <body>
 
 <header>
-  <div class="logo-wrap">
-    <div class="logo">Market Pulse</div>
-    <div class="logo-sub">Live BSE/NSE corporate alerts</div>
+  <div class="logo-wrap" style="display:flex;align-items:center;gap:10px">
+    <svg width="44" height="26" viewBox="0 0 52 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <polyline points="2,16 10,16 14,4 20,28 25,6 30,22 34,16 50,16" fill="none" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="logo">Market Pulse</div>
+      <div class="logo-sub">Indian markets, distilled</div>
+    </div>
   </div>
   <div class="header-right">
-    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
     <button class="theme-btn" id="theme-btn">🌙</button>
+    <button class="theme-btn" id="menu-btn" onclick="openMenu()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+      <span style="display:block;width:14px;height:1.5px;background:var(--text);border-radius:1px"></span>
+      <span style="display:block;width:14px;height:1.5px;background:var(--text);border-radius:1px"></span>
+      <span style="display:block;width:14px;height:1.5px;background:var(--text);border-radius:1px"></span>
+    </button>
   </div>
 </header>
+
+<!-- ── MENU DRAWER ── -->
+<div id="menu-overlay" onclick="closeMenu()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200"></div>
+<div id="menu-drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:280px;background:var(--bg);border-left:1px solid var(--border);z-index:201;padding:20px;overflow-y:auto;transform:translateX(100%);transition:transform .25s ease">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px">Menu</span>
+    <button onclick="closeMenu()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">×</button>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Navigation</div>
+    <button onclick="switchPage('alerts',document.querySelector('[data-page=alerts]'));closeMenu()" style="text-align:left;padding:10px 12px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--text);font-family:'Inter',sans-serif">🔔 Alerts</button>
+    <button onclick="switchPage('pulse',document.querySelector('[data-page=pulse]'));closeMenu()" style="text-align:left;padding:10px 12px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--text);font-family:'Inter',sans-serif">🩺 Pulse</button>
+    <button onclick="switchPage('sectors',document.querySelector('[data-page=sectors]'));closeMenu()" style="text-align:left;padding:10px 12px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--text);font-family:'Inter',sans-serif">🗂 Sectors</button>
+    <button onclick="switchPage('deriv',document.querySelector('[data-page=deriv]'));closeMenu()" style="text-align:left;padding:10px 12px;border-radius:8px;border:none;background:none;cursor:pointer;font-size:14px;color:var(--text);font-family:'Inter',sans-serif">⚖️ Derivatives</button>
+  </div>
+  <div style="height:1px;background:var(--border);margin:20px 0"></div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Telegram channels</div>
+    <a href="https://t.me/Nifty750_results" target="_blank" rel="noopener" style="padding:10px 12px;border-radius:8px;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;text-decoration:none;display:block">
+      <div style="font-weight:500;margin-bottom:2px">Nifty 750 Results</div>
+      <div style="font-size:11px;color:var(--muted)">AI-generated snapshot cards for results</div>
+    </a>
+    <a href="https://t.me/Nse_Bse_result" target="_blank" rel="noopener" style="padding:10px 12px;border-radius:8px;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;text-decoration:none;display:block">
+      <div style="font-weight:500;margin-bottom:2px">NSE/BSE Results</div>
+      <div style="font-size:11px;color:var(--muted)">All results alerts</div>
+    </a>
+    <a href="https://t.me/market_pulse_alert" target="_blank" rel="noopener" style="padding:10px 12px;border-radius:8px;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;text-decoration:none;display:block">
+      <div style="font-weight:500;margin-bottom:2px">Market Pulse Alerts</div>
+      <div style="font-size:11px;color:var(--muted)">Order wins, dividends, buybacks, acquisitions & more for Nifty 750</div>
+    </a>
+  </div>
+  <div style="height:1px;background:var(--border);margin:20px 0"></div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">About</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.6;padding:0 2px">Market Pulse is a fully automated market intelligence tool — corporate filings, sector rotation, sentiment signals and derivatives data, all sourced directly from BSE and NSE with no manual effort. Built by Tanishq.</p>
+  </div>
+</div>
 
 <!-- ══ PAGE: ALERTS ══ -->
 <div class="page active" id="page-alerts">
@@ -309,6 +353,21 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 <script>
 const SUPABASE_URL = 'https://kbklmidusxqkbjgpsdlg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTU3MTcsImV4cCI6MjA5NTY5MTcxN30.D_zNYY3NX2we-hrfpPbB20iaNyrTKlIhYd6MX3LKJY4';
+
+function openMenu() {
+  document.getElementById('menu-overlay').style.display = 'block';
+  var d = document.getElementById('menu-drawer');
+  d.style.display = 'block';
+  setTimeout(function() { d.style.transform = 'translateX(0)'; }, 10);
+}
+function closeMenu() {
+  var d = document.getElementById('menu-drawer');
+  d.style.transform = 'translateX(100%)';
+  setTimeout(function() {
+    d.style.display = 'none';
+    document.getElementById('menu-overlay').style.display = 'none';
+  }, 250);
+}
 
 // ── Theme ──
 let isDark = localStorage.getItem('theme') === 'dark' || (localStorage.getItem('theme') === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
