@@ -500,6 +500,104 @@ def collect_pulse(sectors, companies):
     })
     print(f"Pulse saved — Mood: {mood} ({green_count}/5 signals available)")
 
+def fetch_options_upstox(symbol="NSE_INDEX|Nifty 50", index_name="nifty"):
+    """Fetch option chain from Upstox and calculate PCR, max pain, key strikes"""
+    try:
+        # Get nearest expiry
+        r = upstox_get(f"https://api.upstox.com/v2/option/contract?instrument_key={symbol}")
+        if not r or 'data' not in r: return None
+        expiries = sorted(set(d['expiry'] for d in r['data']))
+        if not expiries: return None
+        nearest = expiries[0]
+
+        # Get option chain
+        r2 = upstox_get(f"https://api.upstox.com/v2/option/chain?instrument_key={symbol}&expiry_date={nearest}")
+        if not r2 or 'data' not in r2: return None
+        chain = r2['data']
+        if not chain: return None
+
+        spot_price = chain[0].get('underlying_spot_price', 0)
+        total_call_oi = 0; total_put_oi = 0
+        strike_data = {}
+        pain = {}
+
+        for item in chain:
+            strike = item['strike_price']
+            ce_oi  = item.get('call_options', {}).get('market_data', {}).get('oi', 0) or 0
+            pe_oi  = item.get('put_options', {}).get('market_data', {}).get('oi', 0) or 0
+            ce_vol = item.get('call_options', {}).get('market_data', {}).get('volume', 0) or 0
+            pe_vol = item.get('put_options', {}).get('market_data', {}).get('volume', 0) or 0
+            total_call_oi += ce_oi; total_put_oi += pe_oi
+            strike_data[strike] = {'ce_oi': ce_oi, 'pe_oi': pe_oi, 'ce_vol': ce_vol, 'pe_vol': pe_vol}
+
+        # PCR
+        pcr = round(total_put_oi / total_call_oi, 2) if total_call_oi > 0 else 0
+
+        # Max pain
+        for strike in strike_data:
+            loss = sum(
+                strike_data[s]['ce_oi'] * (strike - s) if s < strike else
+                strike_data[s]['pe_oi'] * (s - strike) if s > strike else 0
+                for s in strike_data
+            )
+            pain[strike] = loss
+        max_pain = min(pain, key=pain.get) if pain else None
+
+        # Key strikes
+        max_ce = max(strike_data, key=lambda s: strike_data[s]['ce_oi']) if strike_data else None
+        max_pe = max(strike_data, key=lambda s: strike_data[s]['pe_oi']) if strike_data else None
+
+        # Top OI strikes
+        all_strikes = []
+        for strike, vals in strike_data.items():
+            if vals['ce_oi'] > 0:
+                all_strikes.append({'strike': strike, 'type': 'call',
+                    'oi_lakh': round(vals['ce_oi']/100000, 1),
+                    'oi_change': round(vals['ce_vol']/100000, 1)})
+            if vals['pe_oi'] > 0:
+                all_strikes.append({'strike': strike, 'type': 'put',
+                    'oi_lakh': round(vals['pe_oi']/100000, 1),
+                    'oi_change': round(vals['pe_vol']/100000, 1)})
+        top_oi = sorted(all_strikes, key=lambda x: abs(x['oi_lakh']), reverse=True)[:8]
+
+        # Futures premium from index quote
+        q = fetch_index_quote('Nifty 50' if 'Nifty 50' in symbol else 'Nifty Bank')
+        futures_premium = None
+        if q and 'ohlc' in q:
+            close = q['ohlc'].get('close', 0)
+            if close and spot_price:
+                futures_premium = round(float(close) - float(spot_price), 2)
+
+        print(f"  {index_name}: PCR={pcr} MaxPain={max_pain} Spot={spot_price}")
+        return {
+            'spot_price': spot_price, 'pcr': pcr, 'max_pain': max_pain,
+            'max_oi_call_strike': max_ce, 'max_oi_put_strike': max_pe,
+            'top_oi_strikes': top_oi, 'futures_premium': futures_premium,
+            'fii_long_pct': None,
+        }
+    except Exception as e:
+        print(f"  Options error ({index_name}): {e}")
+        return None
+
+def collect_derivatives():
+    print("\n── Collecting Derivatives data ──")
+    now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    for idx_name, symbol in [("nifty", "NSE_INDEX|Nifty 50"), ("banknifty", "NSE_INDEX|Nifty Bank")]:
+        print(f"  Fetching {idx_name}...")
+        opts = fetch_options_upstox(symbol, idx_name)
+        if not opts: print(f"  No data for {idx_name}"); continue
+        supabase_upsert("derivatives_snapshot", {
+            "date": now, "index_name": idx_name,
+            "spot_price": opts['spot_price'], "pcr": opts['pcr'],
+            "max_pain": opts['max_pain'],
+            "max_oi_call_strike": opts['max_oi_call_strike'],
+            "max_oi_put_strike":  opts['max_oi_put_strike'],
+            "top_oi_strikes": json.dumps(opts['top_oi_strikes']),
+            "futures_premium": opts['futures_premium'],
+            "fii_long_pct": None,
+        })
+        time.sleep(1)
+
 # ══════════════════════════════════════════════════════════════════════
 # ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════
@@ -513,13 +611,13 @@ if __name__ == "__main__":
     companies, sectors = load_companies()
 
     if RUN_MODE == "evening":
-        # Evening: fetch fresh prices + calculate everything
         collect_price_history(companies)
         collect_sectors(sectors, companies)
         collect_pulse(sectors, companies)
+        collect_derivatives()
     else:
-        # Morning: just recalculate from existing price history
         collect_sectors(sectors, companies)
         collect_pulse(sectors, companies)
+        collect_derivatives()
 
     print("\n✓ All done!")
