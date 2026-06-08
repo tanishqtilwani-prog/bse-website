@@ -522,7 +522,7 @@ def collect_pulse(sectors, companies):
     vix_val, vix_v, vix_l     = fetch_vix_upstox();          print(f"VIX: {vix_val}")
     nt_val, nt_v, nt_l        = fetch_nifty100_vs_200dma();   print(f"Nifty 100: {nt_val}")
     br_pct, br_v, br_l        = fetch_breadth_upstox(sectors, companies); print(f"Breadth: {br_pct}%")
-    ff, fv, fl, df, dv, dl    = fetch_fii_dii_bse();          print(f"FII: {ff} DII: {df}")
+    ff, fv, fl, df, dv, dl    = None, "gray", "N/A", None, "gray", "N/A"; print("FII: None DII: None")
     fii_fp, fii_fv, fii_fl    = fetch_fii_futures_nse();      print(f"FII futures: {fii_fp}%")
 
     # PCR from Upstox option chain
