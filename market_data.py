@@ -481,12 +481,23 @@ def collect_pulse(sectors, companies):
     br_pct, br_v, br_l        = fetch_breadth_upstox(sectors, companies); print(f"Breadth: {br_pct}%")
     ff, fv, fl, df, dv, dl    = fetch_fii_dii_bse();          print(f"FII: {ff} DII: {df}")
 
-    # These need NSE — skip for now, show gray
-    pcr_val=None; pcr_v="gray"; pcr_l="N/A"
+    # PCR from Upstox option chain
+    try:
+        opts = fetch_options_upstox("NSE_INDEX|Nifty 50", "nifty")
+        if opts and opts.get('pcr'):
+            pcr_num = opts['pcr']
+            pcr_val = str(pcr_num)
+            pcr_v   = "red" if pcr_num < 0.7 else ("green" if pcr_num > 1.2 else "amber")
+            pcr_l   = "Market greedy" if pcr_num < 0.7 else ("Market fearful" if pcr_num > 1.2 else "Neutral")
+        else:
+            pcr_val=None; pcr_v="gray"; pcr_l="N/A"
+    except:
+        pcr_val=None; pcr_v="gray"; pcr_l="N/A"
+    print(f"PCR: {pcr_val}")
     ad_val=None;  ad_v="gray";  ad_l="N/A"
     fii_fp=None;  fii_fv="gray"; fii_fl="N/A"
 
-    verdicts    = [vix_v, nt_v, br_v, fv, dv]
+    verdicts    = [vix_v, pcr_v, nt_v, br_v, fv, dv]
     green_count = sum(1 for v in verdicts if v == "green")
     red_count   = sum(1 for v in verdicts if v == "red")
     mood = "Bullish" if green_count >= 4 else ("Bearish" if red_count >= 4 else "Cautious")
