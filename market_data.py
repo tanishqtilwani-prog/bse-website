@@ -442,9 +442,52 @@ def fetch_breadth_upstox(sectors, companies):
         print(f"Breadth error: {e}")
     return None, "gray", "N/A"
 
-def fetch_fii_dii_bse():
-    """FII/DII — BSE library method unavailable, return empty for now"""
-    return None, "gray", "N/A", None, "gray", "N/A"
+def fetch_fii_futures_nse():
+    """Fetch FII index futures long/short from NSE FAO participant OI CSV"""
+    try:
+        from datetime import date, timedelta
+        nse_headers = {'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.nseindia.com'}
+        for i in range(1, 5):
+            d = date.today() - timedelta(days=i)
+            if d.weekday() >= 5: continue  # skip weekends
+            dd = d.strftime('%d%m%Y')
+            url = f'https://archives.nseindia.com/content/nsccl/fao_participant_oi_{dd}.csv'
+            r = requests.get(url, headers=nse_headers, timeout=10)
+            if r.status_code != 200: continue
+            for line in r.text.strip().split('\n'):
+                if line.startswith('FII'):
+                    parts = [p.strip() for p in line.split(',')]
+                    fut_long  = float(parts[1].replace('"','')) if len(parts) > 1 else 0
+                    fut_short = float(parts[2].replace('"','')) if len(parts) > 2 else 0
+                    total = fut_long + fut_short
+                    if total > 0:
+                        pct     = round((fut_long / total) * 100, 1)
+                        verdict = "green" if pct > 55 else ("red" if pct < 45 else "amber")
+                        label   = "Bullish positioning" if pct > 55 else ("Bearish positioning" if pct < 45 else "Neutral")
+                        print(f"FII futures: {pct}% long (from {d})")
+                        return pct, verdict, label
+    except Exception as e:
+        print(f"FII futures NSE error: {e}")
+    return None, "gray", "N/A"
+
+def fetch_ad_ratio_bse():
+    """Fetch Advance/Decline from BSE library for BSE 500"""
+    try:
+        with BSE(BSE_DL) as bse:
+            data = bse.advanceDecline()
+        for item in data:
+            if item.get('Sens_ind') == 'BSE 500':
+                up = int(item.get('UP', 0) or 0)
+                dn = int(item.get('DN', 0) or 0)
+                if dn > 0:
+                    ratio   = round(up / dn, 1)
+                    verdict = "green" if ratio >= 1.5 else ("red" if ratio < 1 else "amber")
+                    label   = "Healthy" if ratio >= 1.5 else ("Weak" if ratio < 1 else "Mixed")
+                    print(f"A/D BSE 500: {up}/{dn} = {ratio}:1")
+                    return f"{ratio}:1", verdict, label
+    except Exception as e:
+        print(f"BSE A/D error: {e}")
+    return None, "gray", "N/A"
 
 # ── MAIN COLLECTORS ───────────────────────────────────────────────────
 def collect_sectors(sectors, companies):
@@ -480,6 +523,7 @@ def collect_pulse(sectors, companies):
     nt_val, nt_v, nt_l        = fetch_nifty100_vs_200dma();   print(f"Nifty 100: {nt_val}")
     br_pct, br_v, br_l        = fetch_breadth_upstox(sectors, companies); print(f"Breadth: {br_pct}%")
     ff, fv, fl, df, dv, dl    = fetch_fii_dii_bse();          print(f"FII: {ff} DII: {df}")
+    fii_fp, fii_fv, fii_fl    = fetch_fii_futures_nse();      print(f"FII futures: {fii_fp}%")
 
     # PCR from Upstox option chain
     try:
@@ -494,10 +538,9 @@ def collect_pulse(sectors, companies):
     except:
         pcr_val=None; pcr_v="gray"; pcr_l="N/A"
     print(f"PCR: {pcr_val}")
-    ad_val=None;  ad_v="gray";  ad_l="N/A"
-    fii_fp=None;  fii_fv="gray"; fii_fl="N/A"
+    ad_val, ad_v, ad_l = fetch_ad_ratio_bse(); print(f"A/D: {ad_val}")
 
-    verdicts    = [vix_v, pcr_v, nt_v, br_v, fv, dv]
+    verdicts    = [vix_v, pcr_v, nt_v, br_v, fv, dv, ad_v, fii_fv]
     green_count = sum(1 for v in verdicts if v == "green")
     red_count   = sum(1 for v in verdicts if v == "red")
     mood = "Bullish" if green_count >= 4 else ("Bearish" if red_count >= 4 else "Cautious")
