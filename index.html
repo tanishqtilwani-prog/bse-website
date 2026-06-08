@@ -152,8 +152,26 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 .banner-label{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
 .banner-value{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.5px}
 .sector-signal-list{display:flex;flex-direction:column;gap:1px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
-.sector-sig-row{display:flex;align-items:center;padding:10px 14px;background:var(--card);gap:10px;transition:background .1s}
+.sector-sig-row{display:flex;align-items:center;padding:10px 14px;background:var(--card);gap:10px;transition:background .1s;cursor:pointer}
 .sector-sig-row:hover{background:var(--surface)}
+/* Tooltip styles */
+.info-btn{width:15px;height:15px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;font-size:9px;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;vertical-align:middle;margin-left:4px;line-height:1}
+.info-btn:hover{border-color:var(--text);color:var(--text)}
+.tooltip-box{display:none;position:absolute;left:0;right:0;z-index:100;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);margin-top:4px}
+.tooltip-box.show{display:block}
+.tt-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
+.tt-case{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:12px;line-height:1.4}
+.tt-case:last-child{margin-bottom:0}
+.tt-range{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);flex-shrink:0;min-width:72px;margin-top:1px}
+.tt-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+/* Sector expand */
+.sector-companies{display:none;background:var(--surface);border-top:1px solid var(--border);padding:8px 14px;max-height:220px;overflow-y:auto}
+.sector-companies.open{display:block}
+.co-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:11px}
+.co-row:last-child{border-bottom:none}
+.co-name{color:var(--text);flex:1}
+.co-price{font-family:'JetBrains Mono',monospace;color:var(--muted);margin-right:10px}
+.co-chg{font-family:'JetBrains Mono',monospace;font-size:10px;min-width:44px;text-align:right}
 .sig-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .sig-dot-g{background:#16a34a}
 .sig-dot-r{background:var(--red)}
@@ -353,6 +371,23 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 <script>
 const SUPABASE_URL = 'https://kbklmidusxqkbjgpsdlg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTU3MTcsImV4cCI6MjA5NTY5MTcxN30.D_zNYY3NX2we-hrfpPbB20iaNyrTKlIhYd6MX3LKJY4';
+
+function toggleDTT(id, e) {
+  e.stopPropagation();
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
+
+function toggleSector(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+function toggleSectorTT(e) {
+  e.stopPropagation();
+  var el = document.getElementById('tt-score');
+  if (el) el.classList.toggle('show');
+}
 
 function openMenu() {
   document.getElementById('menu-overlay').style.display = 'block';
@@ -584,22 +619,52 @@ function renderPulse(d) {
   var greenCount = [d.vix_verdict, d.pcr_verdict, d.nifty_trend_verdict, d.fii_verdict, d.dii_verdict, d.ad_ratio_verdict, d.fii_futures_verdict, d.breadth_verdict].filter(function(v) { return dotClass(v) === 'sig-green'; }).length;
   var updated = ''; if (d.date) { try { var _d = new Date(d.date.replace(' ','T')); updated = _d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_d.getMonth()] + ', ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0'); } catch(e){} }
 
-  function sig(name, desc, val, unit, verdict, sub) {
-    return '<div class="signal-row"><div><div class="signal-name">' + name + '</div><div class="signal-desc">' + desc + '</div></div><div class="signal-right"><div><div class="signal-val ' + valClass(verdict) + '">' + (val || '—') + (unit ? ' ' + unit : '') + '</div><div class="signal-verdict">' + (sub || '') + '</div></div><div class="sig-dot ' + dotClass(verdict) + '"></div></div></div>';
+  var TOOLTIPS = {
+    'vix': '<div class="tt-title">India VIX — Fear-o-meter</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Below 15</div><div>Calm market, good time to be invested</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">15 – 20</div><div>Some nervousness, stay alert</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Above 20</div><div>Fear in market, consider being cautious</div></div>',
+    'pcr': '<div class="tt-title">PCR — Crowd Sentiment</div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Below 0.7</div><div>Market overconfident — potential reversal warning</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">0.7 – 1.2</div><div>Balanced sentiment, market is neutral</div></div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Above 1.2</div><div>Fear dominant — historically a good buy signal</div></div>',
+    'dma': '<div class="tt-title">200 DMA — Long Term Health</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Above</div><div>Market in healthy long-term uptrend</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Below</div><div>Market in weak territory, trend is down</div></div>',
+    'fii': '<div class="tt-title">FII Cash Flow — Foreign Money</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Positive</div><div>Foreign investors buying — bullish signal</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Negative</div><div>Foreign investors selling — bearish signal</div></div>',
+    'dii': '<div class="tt-title">DII Cash Flow — Domestic Money</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Positive</div><div>Mutual funds & insurance buying — supports market</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Negative</div><div>Domestic institutions selling — weak signal</div></div>',
+    'ad': '<div class="tt-title">Advance / Decline — Market Breadth</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Above 1.5:1</div><div>More stocks rising than falling — healthy rally</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">1:1 – 1.5:1</div><div>Mixed market, no clear direction</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Below 1:1</div><div>More stocks falling — broad weakness</div></div>',
+    'fiifut': '<div class="tt-title">FII Futures — Big Money Bets</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Above 55%</div><div>Foreign investors betting market will go up</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">45% – 55%</div><div>Neutral positioning, no strong view</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Below 45%</div><div>Foreign investors betting market will go down</div></div>',
+    'breadth': '<div class="tt-title">% Above 200 DMA — Market Participation</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Above 65%</div><div>Broad rally — most stocks are doing well</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">40% – 65%</div><div>Mixed market — some sectors strong, some weak</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Below 40%</div><div>Most stocks struggling — be selective</div></div>',
+    'score': '<div class="tt-title">How sector score is calculated</div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">vs Nifty</div><div>Weekly performance vs Nifty 100 (20%)</div></div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Momentum</div><div>Weekly + monthly price change (15%)</div></div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">RSI</div><div>Relative strength index (15%)</div></div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Volume</div><div>Volume vs 20-day average (15%)</div></div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">52w high</div><div>Distance from 52-week high (10%)</div></div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Orders</div><div>Order wins this month (10%)</div></div>',
+    'deriv_pcr': '<div class="tt-title">PCR — Who Is Winning</div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Below 0.7</div><div>Everyone buying calls — market overconfident, risky</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">0.7 – 1.2</div><div>Balanced. No strong sentiment either way</div></div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Above 1.2</div><div>Everyone scared, buying protection — often a bottom signal</div></div>',
+    'maxpain': '<div class="tt-title">Max Pain — Expiry Magnet</div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">What it is</div><div>The price where option buyers lose the most money on expiry day</div></div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Why it matters</div><div>Market tends to drift toward this level near weekly expiry (Thursday)</div></div>',
+    'sr': '<div class="tt-title">Support &amp; Resistance — Battle Lines</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Support</div><div>Strike with most Put OI — bulls defending here, likely floor</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Resistance</div><div>Strike with most Call OI — bears defending here, likely ceiling</div></div>',
+    'oi': '<div class="tt-title">OI Buildup — Where Big Money Is</div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">High Call OI</div><div>Sellers expect market won\'t go above this level</div></div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">High Put OI</div><div>Sellers expect market won\'t fall below this level</div></div>',
+    'futprem': '<div class="tt-title">Futures Premium — Market Expectation</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Positive</div><div>Market expects prices to go higher — bullish</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Negative</div><div>Market expects prices to fall — bearish (backwardation)</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">Near zero</div><div>No strong expectation either way</div></div>',
+  };
+  var _openTT = null;
+  function toggleTT(id, e) {
+    e.stopPropagation();
+    if (_openTT && _openTT !== id) { var old = document.getElementById('tt-'+_openTT); if(old) old.classList.remove('show'); }
+    var el = document.getElementById('tt-'+id); if(!el) return;
+    el.classList.toggle('show');
+    _openTT = el.classList.contains('show') ? id : null;
+  }
+  document.addEventListener('click', function() {
+    if (_openTT) { var el = document.getElementById('tt-'+_openTT); if(el) el.classList.remove('show'); _openTT = null; }
+  });
+
+  function sig(name, desc, val, unit, verdict, sub, ttid) {
+    var btn = ttid ? '<button class="info-btn" onclick="toggleTT(\''+ttid+'\',event)">i</button>' : '';
+    var tt  = ttid ? '<div class="tooltip-box" id="tt-'+ttid+'">' + (TOOLTIPS[ttid]||'') + '</div>' : '';
+    return '<div class="signal-row" style="position:relative"><div><div class="signal-name">' + name + btn + '</div><div class="signal-desc">' + desc + '</div></div><div class="signal-right"><div><div class="signal-val ' + valClass(verdict) + '">' + (val || '—') + (unit ? ' ' + unit : '') + '</div><div class="signal-verdict">' + (sub || '') + '</div></div><div class="sig-dot ' + dotClass(verdict) + '"></div></div>' + tt + '</div>';
   }
 
   return '<div class="mood-card"><div class="mood-header"><div><div class="mood-label">Market mood</div><div class="mood-value ' + moodClass(mood) + '">' + mood + '</div><div class="mood-score">' + greenCount + ' of 8 signals positive</div></div><div class="mood-updated">' + updated + '</div></div></div>' +
     '<div class="fii-dii-row"><div class="mini-card"><div class="mini-label">FII today</div><div class="mini-value ' + valClass(d.fii_verdict) + '">' + (d.fii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div><div class="mini-card"><div class="mini-label">DII today</div><div class="mini-value ' + valClass(d.dii_verdict) + '">' + (d.dii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div></div>' +
     '<div class="section-title">Market signals</div>' +
     '<div class="signal-grid">' +
-      sig('India VIX', 'Fear gauge', d.vix_value, '', d.vix_verdict, d.vix_label) +
-      sig('PCR Nifty', 'Put-call ratio', d.pcr_nifty, '', d.pcr_verdict, d.pcr_label) +
-      sig('Nifty 100 trend', 'vs 200 DMA', d.nifty_trend_value, '', d.nifty_trend_verdict, d.nifty_trend_label) +
-      sig('FII cash flow', 'Foreign institutional', d.fii_flow, '', d.fii_verdict, d.fii_label) +
-      sig('DII cash flow', 'Domestic institutional', d.dii_flow, '', d.dii_verdict, d.dii_label) +
-      sig('Advance / Decline', 'Market breadth', d.ad_ratio, '', d.ad_ratio_verdict, d.ad_ratio_label) +
-      sig('FII futures', 'Long / short positioning', d.fii_futures_long_pct, '%', d.fii_futures_verdict, d.fii_futures_label) +
-      sig('% above 200 DMA', 'Nifty 500 participation', d.breadth_pct, '%', d.breadth_verdict, d.breadth_label) +
+      sig('India VIX', 'Fear gauge', d.vix_value, '', d.vix_verdict, d.vix_label, 'vix') +
+      sig('PCR Nifty', 'Put-call ratio', d.pcr_nifty, '', d.pcr_verdict, d.pcr_label, 'pcr') +
+      sig('Nifty 100 trend', 'vs 200 DMA', d.nifty_trend_value, '', d.nifty_trend_verdict, d.nifty_trend_label, 'dma') +
+      sig('FII cash flow', 'Foreign institutional', d.fii_flow, '', d.fii_verdict, d.fii_label, 'fii') +
+      sig('DII cash flow', 'Domestic institutional', d.dii_flow, '', d.dii_verdict, d.dii_label, 'dii') +
+      sig('Advance / Decline', 'Market breadth', d.ad_ratio, '', d.ad_ratio_verdict, d.ad_ratio_label, 'ad') +
+      sig('FII futures', 'Long / short positioning', d.fii_futures_long_pct, '%', d.fii_futures_verdict, d.fii_futures_label, 'fiifut') +
+      sig('% above 200 DMA', 'Nifty 500 participation', d.breadth_pct, '%', d.breadth_verdict, d.breadth_label, 'breadth') +
     '</div>';
 }
 
@@ -613,16 +678,30 @@ function renderPulseNoData() {
 async function loadSectors() {
   var el = document.getElementById('sectors-inner');
   try {
+    // Load sector scores
     var resp = await fetch(SUPABASE_URL + '/rest/v1/sector_heatmap?select=*&order=score.desc', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
     var rows = await resp.json();
     if (!rows || rows.length === 0) { el.innerHTML = renderSectorsNoData(); return; }
-    el.innerHTML = renderSectors(rows);
+
+    // Preload latest prices for all companies
+    var priceMap = {};
+    var offset = 0;
+    while (true) {
+      var pr = await fetch(SUPABASE_URL + '/rest/v1/price_history?select=symbol,sector,close_price,prev_close,pct_change&order=date.desc&limit=1000&offset=' + offset, {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
+      var prows = await pr.json();
+      if (!prows || prows.length === 0) break;
+      prows.forEach(function(p) { if (!priceMap[p.symbol]) priceMap[p.symbol] = p; });
+      if (prows.length < 1000) break;
+      offset += 1000;
+    }
+
+    el.innerHTML = renderSectors(rows, priceMap);
   } catch(e) {
     el.innerHTML = '<div class="sectors-loading"><div class="empty-icon">—</div><div class="loading-text">Failed to load sector data</div></div>';
   }
 }
 
-function renderSectors(rows) {
+function renderSectors(rows, priceMap) {
   var fii = rows[0] ? rows[0].fii_weekly : null;
   var dii = rows[0] ? rows[0].dii_weekly : null;
   var vix = rows[0] ? rows[0].vix : null;
@@ -630,10 +709,29 @@ function renderSectors(rows) {
 
   var banner = '<div class="fii-banner"><div class="banner-item"><div class="banner-label">FII this week</div><div class="banner-value ' + (fii && fii > 0 ? 'val-green' : 'val-red') + '">' + (fii ? (fii > 0 ? '+' : '') + '₹' + Math.abs(fii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">DII this week</div><div class="banner-value ' + (dii && dii > 0 ? 'val-green' : 'val-red') + '">' + (dii ? (dii > 0 ? '+' : '') + '₹' + Math.abs(dii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">India VIX</div><div class="banner-value ' + (vix ? (vix < 15 ? 'val-green' : vix < 20 ? 'val-amber' : 'val-red') : 'val-muted') + '">' + (vix || '—') + '</div></div></div>';
 
-  // Sort by score descending
+  // Score tooltip button
+  var scoreTT = '<button class="info-btn" onclick="toggleSectorTT(event)" style="margin-left:6px">i</button>' +
+    '<div class="tooltip-box" id="tt-score" style="position:absolute;left:0;right:0;top:100%;z-index:100">' +
+    '<div class="tt-title">How sector score is calculated</div>' +
+    '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">vs Nifty 20%</div><div>Weekly return vs Nifty 100</div></div>' +
+    '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Momentum 15%</div><div>Weekly + monthly price change</div></div>' +
+    '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">RSI 15%</div><div>Relative strength — overbought/oversold</div></div>' +
+    '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Volume 15%</div><div>Today\'s volume vs 20-day average</div></div>' +
+    '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">52w high 10%</div><div>How close sector is to its yearly peak</div></div>' +
+    '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Orders 10%</div><div>Order win announcements this month</div></div>' +
+    '</div>';
+
+  // Group companies by sector from priceMap
+  var bySector = {};
+  Object.keys(priceMap).forEach(function(sym) {
+    var p = priceMap[sym];
+    if (!bySector[p.sector]) bySector[p.sector] = [];
+    bySector[p.sector].push({symbol: sym, close: p.close_price, pct: p.pct_change});
+  });
+
   var sorted = rows.slice().sort(function(a,b){ return (b.score||50) - (a.score||50); });
 
-  var rows_html = sorted.map(function(s) {
+  var rows_html = sorted.map(function(s, idx) {
     var score = s.score || 50;
     var chg = s.weekly_change_vs_nifty;
     var chgStr = chg !== null && chg !== undefined ? (chg >= 0 ? '+' : '') + chg.toFixed(1) + '%' : '—';
@@ -642,18 +740,33 @@ function renderSectors(rows) {
     var arrow = chg > 0.5 ? '↑' : chg < -0.5 ? '↓' : '→';
     var arrowColor = chg > 0.5 ? '#16a34a' : chg < -0.5 ? 'var(--red)' : '#d97706';
     var rsi = s.rsi ? 'RSI ' + s.rsi.toFixed(0) : '—';
-    return '<div class="sector-sig-row">' +
-      '<span class="sig-dot ' + dotCls + '"></span>' +
-      '<span class="sector-sig-name">' + (s.sector || '—') + '</span>' +
-      '<span class="sector-sig-rsi">' + rsi + '</span>' +
-      '<span class="sector-sig-change ' + chgCls + '">' + chgStr + '</span>' +
-      '<span class="sector-sig-arrow" style="color:' + arrowColor + '">' + arrow + '</span>' +
+    var sectorName = s.sector || '—';
+
+    // Build company list
+    var companies = (bySector[sectorName] || []).sort(function(a,b){ return (b.close||0)-(a.close||0); });
+    var coHtml = companies.length > 0 ? companies.map(function(c) {
+      var pct = c.pct !== null && c.pct !== undefined ? c.pct : null;
+      var pctStr = pct !== null ? (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%' : '—';
+      var pctCls = pct > 0 ? 'val-green' : pct < 0 ? 'val-red' : 'val-amber';
+      return '<div class="co-row"><span class="co-name">' + c.symbol + '</span><span class="co-price">₹' + (c.close ? c.close.toFixed(1) : '—') + '</span><span class="co-chg ' + pctCls + '">' + pctStr + '</span></div>';
+    }).join('') : '<div style="font-size:11px;color:var(--muted);padding:4px 0">No price data</div>';
+
+    return '<div>' +
+      '<div class="sector-sig-row" onclick="toggleSector(\'sec-' + idx + '\')">' +
+        '<span class="sig-dot ' + dotCls + '"></span>' +
+        '<span class="sector-sig-name">' + sectorName + '</span>' +
+        '<span class="sector-sig-rsi">' + rsi + '</span>' +
+        '<span class="sector-sig-change ' + chgCls + '">' + chgStr + '</span>' +
+        '<span class="sector-sig-arrow" style="color:' + arrowColor + '">' + arrow + '</span>' +
+      '</div>' +
+      '<div class="sector-companies" id="sec-' + idx + '">' + coHtml + '</div>' +
     '</div>';
   }).join('');
 
-  return banner + '<div class="section-title">Sector strength — ranked</div>' +
+  return banner +
+    '<div class="section-title" style="position:relative;display:flex;align-items:center">Sector strength — ranked' + scoreTT + '</div>' +
     '<div class="sector-signal-list">' + rows_html + '</div>' +
-    '<div class="last-updated">Updated ' + updated + ' · sorted strongest → weakest vs Nifty</div>';
+    '<div class="last-updated">Updated ' + updated + ' · tap any sector to see companies · sorted strongest → weakest vs Nifty</div>';
 }
 
 function renderSectorsNoData() {
@@ -704,6 +817,18 @@ function renderDerivContent(d) {
   var fiiLabel = d.fii_long_pct > 55 ? 'Bullish positioning' : d.fii_long_pct < 45 ? 'Bearish positioning' : 'Neutral positioning';
   var updated = ''; if (d.date) { try { var _d = new Date(d.date.replace(' ','T')); updated = _d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_d.getMonth()] + ', ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0'); } catch(e){} }
 
+  // Tooltip helper for derivatives
+  var DT = {
+    'deriv_pcr': '<div class="tt-title">PCR — Who Is Winning</div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Below 0.7</div><div>Everyone buying calls — market overconfident, risky</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">0.7 – 1.2</div><div>Balanced. No strong sentiment either way</div></div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Above 1.2</div><div>Everyone scared, buying protection — often a bottom signal</div></div>',
+    'maxpain': '<div class="tt-title">Max Pain — Expiry Magnet</div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">What it is</div><div>Price where option buyers lose most money at expiry</div></div><div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Why it matters</div><div>Market tends to drift toward this level near weekly expiry (Thursday)</div></div>',
+    'sr': '<div class="tt-title">Support &amp; Resistance — Battle Lines</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Support</div><div>Strike with most Put OI — bulls defending here, likely floor</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Resistance</div><div>Strike with most Call OI — bears defending here, likely ceiling</div></div>',
+    'oi': '<div class="tt-title">OI Buildup — Where Big Money Is</div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">High Call OI</div><div>Sellers expect market won\'t go above this level</div></div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">High Put OI</div><div>Sellers expect market won\'t fall below this level</div></div>',
+    'futprem': '<div class="tt-title">Futures Premium — Market Expectation</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Positive</div><div>Market expects prices to go higher — bullish</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Negative</div><div>Market expects prices to fall — bearish</div></div>',
+  };
+  function dtt(id) {
+    return '<button class="info-btn" onclick="toggleDTT(\'d'+id+'\',event)">i</button><div class="tooltip-box" id="d'+id+'" style="position:absolute;left:0;right:0;top:100%;z-index:100">'+DT[id]+'</div>';
+  }
+
   var oi_rows = '';
   var oi_strikes = d.top_oi_strikes;
   if (typeof oi_strikes === 'string') { try { oi_strikes = JSON.parse(oi_strikes); } catch(e) { oi_strikes = []; } }
@@ -714,13 +839,13 @@ function renderDerivContent(d) {
     });
   }
 
-  return '<div class="section-title">Options snapshot</div>' +
-    '<div class="range-indicator"><div class="range-title">Key levels — ' + (d.index_name || '') + ' spot ' + (spot ? spot.toLocaleString('en-IN') : '—') + '</div><div class="range-bar-wrap"><div class="range-bar-fill" style="left:0;right:0"></div><div class="range-marker" style="left:' + spotPct + '%"></div></div><div class="range-labels"><span class="range-support">▲ ' + (support ? support.toLocaleString('en-IN') : '—') + ' Support</span><span style="font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace">Max pain ' + (maxpain ? maxpain.toLocaleString('en-IN') : '—') + '</span><span class="range-resist">Resist ' + (resist ? resist.toLocaleString('en-IN') : '—') + ' ▼</span></div></div>' +
-    '<div class="deriv-grid"><div class="deriv-card"><div class="deriv-label">PCR</div><div class="deriv-value ' + pcrClass + '">' + (d.pcr ? d.pcr.toFixed(2) : '—') + '</div><div class="deriv-sub">' + pcrLabel + '</div></div><div class="deriv-card"><div class="deriv-label">Max pain</div><div class="deriv-value">' + (maxpain ? maxpain.toLocaleString('en-IN') : '—') + '</div><div class="deriv-sub">Expiry magnet</div></div></div>' +
-    '<div class="section-title">OI buildup — top strikes</div>' +
+  return '<div class="section-title" style="position:relative">Options snapshot</div>' +
+    '<div class="range-indicator" style="position:relative"><div class="range-title">Key levels — ' + (d.index_name || '') + ' spot ' + (spot ? spot.toLocaleString('en-IN') : '—') + '<button class="info-btn" onclick="toggleDTT(\'dsr\',event)" style="margin-left:6px">i</button><div class="tooltip-box" id="dsr" style="position:absolute;left:0;right:0;top:100%;z-index:100">'+DT['sr']+'</div></div><div class="range-bar-wrap"><div class="range-bar-fill" style="left:0;right:0"></div><div class="range-marker" style="left:' + spotPct + '%"></div></div><div class="range-labels"><span class="range-support">▲ ' + (support ? support.toLocaleString('en-IN') : '—') + ' Support</span><span style="font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace">Max pain ' + (maxpain ? maxpain.toLocaleString('en-IN') : '—') + '</span><span class="range-resist">Resist ' + (resist ? resist.toLocaleString('en-IN') : '—') + ' ▼</span></div></div>' +
+    '<div class="deriv-grid"><div class="deriv-card" style="position:relative"><div class="deriv-label">PCR' + dtt('deriv_pcr') + '</div><div class="deriv-value ' + pcrClass + '">' + (d.pcr ? d.pcr.toFixed(2) : '—') + '</div><div class="deriv-sub">' + pcrLabel + '</div></div><div class="deriv-card" style="position:relative"><div class="deriv-label">Max pain' + dtt('maxpain') + '</div><div class="deriv-value">' + (maxpain ? maxpain.toLocaleString('en-IN') : '—') + '</div><div class="deriv-sub">Expiry magnet</div></div></div>' +
+    '<div class="section-title" style="position:relative;display:flex;align-items:center">OI buildup — top strikes<button class="info-btn" onclick="toggleDTT(\'doi\',event)" style="margin-left:6px">i</button><div class="tooltip-box" id="doi" style="position:absolute;left:0;right:0;top:100%;z-index:100">'+DT['oi']+'</div></div>' +
     '<div class="oi-table-wrap"><div class="oi-table-head"><span class="oi-col-label">Strike</span><span class="oi-col-label" style="text-align:right">Type</span><span class="oi-col-label" style="text-align:right">Total OI</span><span class="oi-col-label" style="text-align:right">OI chg</span></div>' + (oi_rows || '<div style="padding:16px;text-align:center;font-size:12px;color:var(--muted)">No OI data</div>') + '</div>' +
     '<div class="section-title">Futures positioning</div>' +
-    '<div class="futures-grid"><div class="deriv-card"><div class="deriv-label">FII index futures</div><div class="deriv-value ' + fiiClass + '">' + (d.fii_long_pct ? d.fii_long_pct.toFixed(0) + '% long' : '—') + '</div><div class="deriv-sub">' + fiiLabel + '</div></div><div class="deriv-card"><div class="deriv-label">Futures premium</div><div class="deriv-value ' + premClass + '">' + (d.futures_premium !== null ? (d.futures_premium > 0 ? '+' : '') + d.futures_premium.toFixed(0) + ' pts' : '—') + '</div><div class="deriv-sub">' + premLabel + '</div></div></div>' +
+    '<div class="futures-grid"><div class="deriv-card"><div class="deriv-label">FII index futures</div><div class="deriv-value ' + fiiClass + '">' + (d.fii_long_pct ? d.fii_long_pct.toFixed(0) + '% long' : '—') + '</div><div class="deriv-sub">' + fiiLabel + '</div></div><div class="deriv-card" style="position:relative"><div class="deriv-label">Futures premium' + dtt('futprem') + '</div><div class="deriv-value ' + premClass + '">' + (d.futures_premium !== null ? (d.futures_premium > 0 ? '+' : '') + d.futures_premium.toFixed(0) + ' pts' : '—') + '</div><div class="deriv-sub">' + premLabel + '</div></div></div>' +
     '<div class="last-updated">Updated ' + updated + '</div>';
 }
 
