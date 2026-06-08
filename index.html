@@ -29,8 +29,8 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--bg);border-top:1px solid var(--border);display:flex;z-index:100;max-width:680px;margin:0 auto}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;color:var(--muted);font-size:11px;font-family:'Inter',sans-serif;font-weight:500;letter-spacing:.2px;transition:color .15s;padding:8px 0}
-.nav-item.active{color:var(--text)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;background:none;border:none;border-top:2px solid transparent;color:var(--muted);font-size:11px;font-family:'Inter',sans-serif;font-weight:500;letter-spacing:.2px;transition:color .15s,border-color .15s;padding:8px 0}
+.nav-item.active{color:var(--text);border-top-color:var(--text)}
 .nav-icon{font-size:22px;line-height:1}
 
 /* ── TAB PAGES ── */
@@ -705,8 +705,10 @@ function renderDerivContent(d) {
   var updated = ''; if (d.date) { try { var _d = new Date(d.date.replace(' ','T')); updated = _d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_d.getMonth()] + ', ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0'); } catch(e){} }
 
   var oi_rows = '';
-  if (d.top_oi_strikes && Array.isArray(d.top_oi_strikes)) {
-    d.top_oi_strikes.slice(0,5).forEach(function(r) {
+  var oi_strikes = d.top_oi_strikes;
+  if (typeof oi_strikes === 'string') { try { oi_strikes = JSON.parse(oi_strikes); } catch(e) { oi_strikes = []; } }
+  if (oi_strikes && Array.isArray(oi_strikes)) {
+    oi_strikes.slice(0,5).forEach(function(r) {
       var chgCls = r.type === 'call' ? 'call' : 'put';
       oi_rows += '<div class="oi-row"><span class="oi-strike">' + r.strike + '</span><span class="oi-val ' + chgCls + '">' + r.type.toUpperCase() + '</span><span class="oi-val bold">' + (r.oi_lakh ? r.oi_lakh.toFixed(1) + 'L' : '—') + '</span><span class="oi-val ' + (r.oi_change > 0 ? 'put' : 'call') + '">' + (r.oi_change ? (r.oi_change > 0 ? '+' : '') + r.oi_change.toFixed(1) + 'L' : '—') + '</span></div>';
     });
