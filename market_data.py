@@ -40,14 +40,36 @@ def supabase_upsert(table, record):
         print(f"✗ Supabase upsert error {table}: {e}")
         return False
 
-def supabase_select(table, params=""):
+def supabase_select(table, params="", paginate=False):
     try:
-        resp = requests.get(
-            f"{SUPABASE_URL}/rest/v1/{table}?{params}",
-            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
-            timeout=15
-        )
-        return resp.json() if resp.status_code == 200 else []
+        if not paginate:
+            resp = requests.get(
+                f"{SUPABASE_URL}/rest/v1/{table}?{params}",
+                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
+                timeout=15
+            )
+            return resp.json() if resp.status_code == 200 else []
+        # Paginate through all results
+        all_rows = []
+        offset = 0
+        page_size = 1000
+        while True:
+            sep = '&' if params else ''
+            resp = requests.get(
+                f"{SUPABASE_URL}/rest/v1/{table}?{params}{sep}limit={page_size}&offset={offset}",
+                headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
+                timeout=30
+            )
+            if resp.status_code != 200:
+                break
+            rows = resp.json()
+            if not rows:
+                break
+            all_rows.extend(rows)
+            if len(rows) < page_size:
+                break
+            offset += page_size
+        return all_rows
     except Exception as e:
         print(f"✗ Supabase select error: {e}")
         return []
@@ -242,10 +264,10 @@ def calculate_sector_metrics(sectors, companies):
         date.today().strftime('%Y-%m-%d'))
     nifty_weekly = calc_weekly_change(nifty_candles) or 0
 
-    # Bulk fetch ALL price history in one query
+    # Bulk fetch ALL price history with pagination
     print("  Fetching all price history from Supabase...")
     all_rows = supabase_select('price_history',
-        'order=date.desc&limit=100000&select=symbol,close_price,volume,sector')
+        'order=date.desc&select=symbol,close_price,volume,sector', paginate=True)
     
     # Group by symbol
     by_symbol = {}
@@ -392,7 +414,7 @@ def fetch_breadth_upstox(sectors, companies):
     try:
         # Get latest close for each stock
         rows = supabase_select('price_history',
-            'order=date.desc&limit=50000&select=symbol,close_price,date')
+            'order=date.desc&select=symbol,close_price,date', paginate=True)
         seen = {}
         for r in rows:
             sym = r['symbol']
