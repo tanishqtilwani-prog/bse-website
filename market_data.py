@@ -35,7 +35,11 @@ def supabase_upsert(table, record):
             },
             json=record, timeout=15
         )
-        return resp.status_code in (200, 201)
+        if resp.status_code in (200, 201):
+            return True
+        else:
+            print(f"✗ Supabase error {table}: {resp.status_code} {resp.text[:300]}")
+            return False
     except Exception as e:
         print(f"✗ Supabase upsert error {table}: {e}")
         return False
@@ -589,9 +593,9 @@ def collect_derivatives():
         supabase_upsert("derivatives_snapshot", {
             "date": now, "index_name": idx_name,
             "spot_price": opts['spot_price'], "pcr": opts['pcr'],
-            "max_pain": opts['max_pain'],
-            "max_oi_call_strike": opts['max_oi_call_strike'],
-            "max_oi_put_strike":  opts['max_oi_put_strike'],
+            "max_pain": int(opts['max_pain']) if opts['max_pain'] else None,
+            "max_oi_call_strike": int(opts['max_oi_call_strike']) if opts['max_oi_call_strike'] else None,
+            "max_oi_put_strike":  int(opts['max_oi_put_strike']) if opts['max_oi_put_strike'] else None,
             "top_oi_strikes": json.dumps(opts['top_oi_strikes']),
             "futures_premium": opts['futures_premium'],
             "fii_long_pct": None,
