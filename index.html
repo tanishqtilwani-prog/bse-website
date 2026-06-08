@@ -155,9 +155,9 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 .sector-sig-row{display:flex;align-items:center;padding:10px 14px;background:var(--card);gap:10px;transition:background .1s;cursor:pointer}
 .sector-sig-row:hover{background:var(--surface)}
 /* Tooltip styles */
-.info-btn{width:15px;height:15px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;font-size:9px;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;vertical-align:middle;margin-left:4px;line-height:1}
-.info-btn:hover{border-color:var(--text);color:var(--text)}
-.tooltip-box{display:none;position:absolute;left:0;right:0;z-index:100;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.15);margin-top:4px}
+.info-btn{width:20px;height:20px;border-radius:50%;border:1.5px solid #e03e3e;background:#e03e3e;cursor:pointer;font-size:10px;color:#fff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Inter',sans-serif;vertical-align:middle;margin-left:4px;line-height:1;font-weight:700}
+.info-btn:hover{background:#c73232;border-color:#c73232}
+.tooltip-box{display:none;position:fixed;left:12px;right:12px;z-index:9999;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.25);max-height:70vh;overflow-y:auto}
 .tooltip-box.show{display:block}
 .tt-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px}
 .tt-case{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:12px;line-height:1.4}
@@ -372,10 +372,32 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 const SUPABASE_URL = 'https://kbklmidusxqkbjgpsdlg.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTU3MTcsImV4cCI6MjA5NTY5MTcxN30.D_zNYY3NX2we-hrfpPbB20iaNyrTKlIhYd6MX3LKJY4';
 
+var _openTTGlobal = null;
+function toggleTT(id, e) {
+  e.stopPropagation();
+  if (_openTTGlobal && _openTTGlobal !== id) {
+    var old = document.getElementById('tt-'+_openTTGlobal);
+    if (old) old.classList.remove('show');
+  }
+  var el = document.getElementById('tt-'+id);
+  if (!el) return;
+  var rect = e.target.getBoundingClientRect();
+  el.style.top = (rect.bottom + 8) + 'px';
+  el.classList.toggle('show');
+  _openTTGlobal = el.classList.contains('show') ? id : null;
+}
+document.addEventListener('click', function() {
+  document.querySelectorAll('.tooltip-box.show').forEach(function(t){ t.classList.remove('show'); });
+  _openTTGlobal = null;
+});
+
 function toggleDTT(id, e) {
   e.stopPropagation();
   var el = document.getElementById(id);
-  if (el) el.classList.toggle('show');
+  if (!el) return;
+  var rect = e.target.getBoundingClientRect();
+  el.style.top = (rect.bottom + 8) + 'px';
+  el.classList.toggle('show');
 }
 
 function toggleSector(id) {
@@ -386,7 +408,10 @@ function toggleSector(id) {
 function toggleSectorTT(e) {
   e.stopPropagation();
   var el = document.getElementById('tt-score');
-  if (el) el.classList.toggle('show');
+  if (!el) return;
+  var rect = e.target.getBoundingClientRect();
+  el.style.top = (rect.bottom + 8) + 'px';
+  el.classList.toggle('show');
 }
 
 function openMenu() {
@@ -636,16 +661,6 @@ function renderPulse(d) {
     'futprem': '<div class="tt-title">Futures Premium — Market Expectation</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Positive</div><div>Market expects prices to go higher — bullish</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Negative</div><div>Market expects prices to fall — bearish (backwardation)</div></div><div class="tt-case"><div class="tt-dot" style="background:#d97706"></div><div class="tt-range">Near zero</div><div>No strong expectation either way</div></div>',
   };
   var _openTT = null;
-  function toggleTT(id, e) {
-    e.stopPropagation();
-    if (_openTT && _openTT !== id) { var old = document.getElementById('tt-'+_openTT); if(old) old.classList.remove('show'); }
-    var el = document.getElementById('tt-'+id); if(!el) return;
-    el.classList.toggle('show');
-    _openTT = el.classList.contains('show') ? id : null;
-  }
-  document.addEventListener('click', function() {
-    if (_openTT) { var el = document.getElementById('tt-'+_openTT); if(el) el.classList.remove('show'); _openTT = null; }
-  });
 
   function sig(name, desc, val, unit, verdict, sub, ttid) {
     var btn = ttid ? '<button class="info-btn" onclick="toggleTT(\''+ttid+'\',event)">i</button>' : '';
@@ -711,7 +726,7 @@ function renderSectors(rows, priceMap) {
 
   // Score tooltip button
   var scoreTT = '<button class="info-btn" onclick="toggleSectorTT(event)" style="margin-left:6px">i</button>' +
-    '<div class="tooltip-box" id="tt-score" style="position:absolute;left:0;right:0;top:100%;z-index:100">' +
+    '<div class="tooltip-box" id="tt-score" >' +
     '<div class="tt-title">How sector score is calculated</div>' +
     '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">vs Nifty 20%</div><div>Weekly return vs Nifty 100</div></div>' +
     '<div class="tt-case"><div class="tt-dot" style="background:#888"></div><div class="tt-range">Momentum 15%</div><div>Weekly + monthly price change</div></div>' +
@@ -744,8 +759,8 @@ function renderSectors(rows, priceMap) {
 
     // Build company list
     var companies = (bySector[sectorName] || []).sort(function(a,b){ return (b.close||0)-(a.close||0); });
-    var coHtml = companies.length > 0 ? companies.map(function(c) {
-      var pct = c.pct !== null && c.pct !== undefined ? c.pct : null;
+    var coHtml = companies.length > 0 ? '<div class="co-row" style="opacity:.5;font-size:10px"><span class="co-name">Company</span><span class="co-price">Close</span><span class="co-chg">Today</span></div>' + companies.map(function(c) {
+      var pct = (c.pct !== null && c.pct !== undefined) ? c.pct : null; // daily % change from bhavcopy
       var pctStr = pct !== null ? (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%' : '—';
       var pctCls = pct > 0 ? 'val-green' : pct < 0 ? 'val-red' : 'val-amber';
       return '<div class="co-row"><span class="co-name">' + c.symbol + '</span><span class="co-price">₹' + (c.close ? c.close.toFixed(1) : '—') + '</span><span class="co-chg ' + pctCls + '">' + pctStr + '</span></div>';
@@ -826,7 +841,7 @@ function renderDerivContent(d) {
     'futprem': '<div class="tt-title">Futures Premium — Market Expectation</div><div class="tt-case"><div class="tt-dot" style="background:#16a34a"></div><div class="tt-range">Positive</div><div>Market expects prices to go higher — bullish</div></div><div class="tt-case"><div class="tt-dot" style="background:#e03e3e"></div><div class="tt-range">Negative</div><div>Market expects prices to fall — bearish</div></div>',
   };
   function dtt(id) {
-    return '<button class="info-btn" onclick="toggleDTT(\'d'+id+'\',event)">i</button><div class="tooltip-box" id="d'+id+'" style="position:absolute;left:0;right:0;top:100%;z-index:100">'+DT[id]+'</div>';
+    return '<button class="info-btn" onclick="toggleDTT(\'d'+id+'\',event)">i</button><div class="tooltip-box" id="d'+id+'" >'+DT[id]+'</div>';
   }
 
   var oi_rows = '';
@@ -840,9 +855,9 @@ function renderDerivContent(d) {
   }
 
   return '<div class="section-title" style="position:relative">Options snapshot</div>' +
-    '<div class="range-indicator" style="position:relative"><div class="range-title">Key levels — ' + (d.index_name || '') + ' spot ' + (spot ? spot.toLocaleString('en-IN') : '—') + '<button class="info-btn" onclick="toggleDTT(\'dsr\',event)" style="margin-left:6px">i</button><div class="tooltip-box" id="dsr" style="position:absolute;left:0;right:0;top:100%;z-index:100">'+DT['sr']+'</div></div><div class="range-bar-wrap"><div class="range-bar-fill" style="left:0;right:0"></div><div class="range-marker" style="left:' + spotPct + '%"></div></div><div class="range-labels"><span class="range-support">▲ ' + (support ? support.toLocaleString('en-IN') : '—') + ' Support</span><span style="font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace">Max pain ' + (maxpain ? maxpain.toLocaleString('en-IN') : '—') + '</span><span class="range-resist">Resist ' + (resist ? resist.toLocaleString('en-IN') : '—') + ' ▼</span></div></div>' +
+    '<div class="range-indicator" style="position:relative"><div class="range-title">Key levels — ' + (d.index_name || '') + ' spot ' + (spot ? spot.toLocaleString('en-IN') : '—') + '<button class="info-btn" onclick="toggleDTT(\'dsr\',event)" style="margin-left:6px">i</button><div class="tooltip-box" id="dsr" >'+DT['sr']+'</div></div><div class="range-bar-wrap"><div class="range-bar-fill" style="left:0;right:0"></div><div class="range-marker" style="left:' + spotPct + '%"></div></div><div class="range-labels"><span class="range-support">▲ ' + (support ? support.toLocaleString('en-IN') : '—') + ' Support</span><span style="font-size:10px;color:var(--muted);font-family:JetBrains Mono,monospace">Max pain ' + (maxpain ? maxpain.toLocaleString('en-IN') : '—') + '</span><span class="range-resist">Resist ' + (resist ? resist.toLocaleString('en-IN') : '—') + ' ▼</span></div></div>' +
     '<div class="deriv-grid"><div class="deriv-card" style="position:relative"><div class="deriv-label">PCR' + dtt('deriv_pcr') + '</div><div class="deriv-value ' + pcrClass + '">' + (d.pcr ? d.pcr.toFixed(2) : '—') + '</div><div class="deriv-sub">' + pcrLabel + '</div></div><div class="deriv-card" style="position:relative"><div class="deriv-label">Max pain' + dtt('maxpain') + '</div><div class="deriv-value">' + (maxpain ? maxpain.toLocaleString('en-IN') : '—') + '</div><div class="deriv-sub">Expiry magnet</div></div></div>' +
-    '<div class="section-title" style="position:relative;display:flex;align-items:center">OI buildup — top strikes<button class="info-btn" onclick="toggleDTT(\'doi\',event)" style="margin-left:6px">i</button><div class="tooltip-box" id="doi" style="position:absolute;left:0;right:0;top:100%;z-index:100">'+DT['oi']+'</div></div>' +
+    '<div class="section-title" style="position:relative;display:flex;align-items:center">OI buildup — top strikes<button class="info-btn" onclick="toggleDTT(\'doi\',event)" style="margin-left:6px">i</button><div class="tooltip-box" id="doi" >'+DT['oi']+'</div></div>' +
     '<div class="oi-table-wrap"><div class="oi-table-head"><span class="oi-col-label">Strike</span><span class="oi-col-label" style="text-align:right">Type</span><span class="oi-col-label" style="text-align:right">Total OI</span><span class="oi-col-label" style="text-align:right">OI chg</span></div>' + (oi_rows || '<div style="padding:16px;text-align:center;font-size:12px;color:var(--muted)">No OI data</div>') + '</div>' +
     '<div class="section-title">Futures positioning</div>' +
     '<div class="futures-grid"><div class="deriv-card"><div class="deriv-label">FII index futures</div><div class="deriv-value ' + fiiClass + '">' + (d.fii_long_pct ? d.fii_long_pct.toFixed(0) + '% long' : '—') + '</div><div class="deriv-sub">' + fiiLabel + '</div></div><div class="deriv-card" style="position:relative"><div class="deriv-label">Futures premium' + dtt('futprem') + '</div><div class="deriv-value ' + premClass + '">' + (d.futures_premium !== null ? (d.futures_premium > 0 ? '+' : '') + d.futures_premium.toFixed(0) + ' pts' : '—') + '</div><div class="deriv-sub">' + premLabel + '</div></div></div>' +
