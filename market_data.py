@@ -163,58 +163,77 @@ def calc_dma_crossover(candles, short=20, long=50):
     return 1 if dma_short > dma_long else -1
 
 # ── STORE PRICE HISTORY ───────────────────────────────────────────────
-def store_price_history(symbol, sector, candles):
-    """Store candles in price_history table"""
+def store_bhavcopy_records(records):
+    """Bulk store bhavcopy records in price_history table"""
     stored = 0
-    for c in candles:
-        dt = c[0][:10]  # just date part
-        record = {
-            'date':        dt,
-            'symbol':      symbol,
-            'sector':      sector,
-            'close_price': c[4],
-            'prev_close':  None,
-            'volume':      c[5],
-            'high_52w':    None,
-            'low_52w':     None,
-            'pct_change':  None,
-        }
-        if supabase_upsert('price_history', record):
+    for rec in records:
+        if supabase_upsert('price_history', rec):
             stored += 1
     return stored
 
-# ── FETCH ALL STOCK PRICES ────────────────────────────────────────────
+# ── FETCH ALL STOCK PRICES VIA BSE BHAVCOPY ──────────────────────────
 def collect_price_history(companies):
-    """Fetch last 60 days OHLCV for all 750 stocks via Upstox"""
-    print("\n── Collecting Price History via Upstox ──")
-    to_date   = date.today().strftime('%Y-%m-%d')
-    from_date = (date.today() - timedelta(days=90)).strftime('%Y-%m-%d')
-    
-    total_stored = 0
-    failed = 0
-    
-    for i, (symbol, info) in enumerate(companies.items()):
-        try:
-            candles = fetch_stock_history(info['isin'], from_date, to_date)
-            if candles:
-                stored = store_price_history(symbol, info['sector'], candles)
-                total_stored += stored
-            else:
-                failed += 1
-            
-            if (i + 1) % 50 == 0:
-                print(f"  Progress: {i+1}/{len(companies)} stocks, {total_stored} records stored")
-            
-            time.sleep(0.1)  # rate limit
-        except Exception as e:
-            print(f"  Error {symbol}: {e}")
-            failed += 1
-    
-    print(f"✓ Price history: {total_stored} records stored, {failed} failed")
+    """Download BSE bhavcopy — one file, all stocks, instant"""
+    print("\n── Collecting Price History via BSE Bhavcopy ──")
+
+    today = date.today().isoformat()
+    existing = supabase_select('price_history', f"date=eq.{today}&limit=1&select=symbol")
+    if existing:
+        print(f"  Today's data already exists — skipping")
+        return
+
+    try:
+        with BSE(BSE_DL) as bse:
+            csv_path = bse.bhavcopyReport(date.today())
+        print(f"  Downloaded: {csv_path}")
+    except Exception as e:
+        print(f"  Bhavcopy download failed: {e}")
+        return
+
+    # Build ISIN -> company lookup
+    isin_to_company = {info['isin']: (symbol, info['sector'])
+                       for symbol, info in companies.items()}
+
+    records = []
+    try:
+        with open(csv_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                isin = row.get('ISIN', '').strip()
+                if isin not in isin_to_company:
+                    continue
+                symbol, sector = isin_to_company[isin]
+                try:
+                    close    = float(row.get('ClsPric', 0) or 0)
+                    prev     = float(row.get('PrvsClsgPric', 0) or 0)
+                    volume   = int(float(row.get('TtlTradgVol', 0) or 0))
+                    high     = float(row.get('HghPric', 0) or 0)
+                    low      = float(row.get('LwPric', 0) or 0)
+                    if close <= 0: continue
+                    pct = round(((close - prev) / prev) * 100, 2) if prev > 0 else 0
+                    records.append({
+                        'date':        today,
+                        'symbol':      symbol,
+                        'sector':      sector,
+                        'close_price': close,
+                        'prev_close':  prev,
+                        'volume':      volume,
+                        'high_52w':    None,
+                        'low_52w':     None,
+                        'pct_change':  pct,
+                    })
+                except (ValueError, TypeError):
+                    continue
+    except Exception as e:
+        print(f"  Bhavcopy parse error: {e}")
+        return
+
+    stored = store_bhavcopy_records(records)
+    print(f"✓ Bhavcopy: {stored}/{len(records)} records stored for {today}")
 
 # ── SECTOR METRICS ────────────────────────────────────────────────────
 def calculate_sector_metrics(sectors, companies):
-    """Calculate sector metrics from price_history in Supabase"""
+    """Calculate sector metrics — bulk fetch all price history at once"""
     sector_metrics = {}
     
     # Get Nifty 100 weekly change as benchmark
@@ -223,17 +242,31 @@ def calculate_sector_metrics(sectors, companies):
         date.today().strftime('%Y-%m-%d'))
     nifty_weekly = calc_weekly_change(nifty_candles) or 0
 
+    # Bulk fetch ALL price history in one query
+    print("  Fetching all price history from Supabase...")
+    all_rows = supabase_select('price_history',
+        'order=date.desc&limit=100000&select=symbol,close_price,volume,sector')
+    
+    # Group by symbol
+    by_symbol = {}
+    for r in all_rows:
+        sym = r['symbol']
+        if sym not in by_symbol:
+            by_symbol[sym] = {'closes': [], 'volumes': []}
+        if r['close_price']: by_symbol[sym]['closes'].append(r['close_price'])
+        if r['volume']:      by_symbol[sym]['volumes'].append(r['volume'])
+    print(f"  Got data for {len(by_symbol)} symbols")
+
     for sector, symbols in sectors.items():
         all_weekly=[]; all_monthly=[]; all_rsi=[]
         all_vol_ratio=[]; all_dist_52w=[]; all_dma=[]
 
         for symbol in symbols:
-            rows = supabase_select('price_history',
-                f"symbol=eq.{symbol}&order=date.desc&limit=60&select=close_price,volume")
-            if len(rows) < 5: continue
+            data = by_symbol.get(symbol, {})
+            closes  = data.get('closes', [])
+            volumes = data.get('volumes', [])
 
-            closes  = [r['close_price'] for r in rows if r['close_price']]
-            volumes = [r['volume'] for r in rows if r['volume']]
+            if len(closes) < 5: continue
 
             if len(closes) >= 6:
                 w = ((closes[0] - closes[5]) / closes[5]) * 100
