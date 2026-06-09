@@ -713,8 +713,7 @@ async function loadSectors() {
     var vixData = await vixResp.json();
     var latestVix = vixData && vixData[0] ? vixData[0].vix_value : null;
 
-    el.innerHTML = renderSectors(rows, priceMap, latestVix);
-  } catch(e) {
+    el.innerHTML = renderSectors(rows, priceMap, latestVix);  } catch(e) {
     el.innerHTML = '<div class="sectors-loading"><div class="empty-icon">—</div><div class="loading-text">Failed to load sector data</div></div>';
   }
 }
@@ -725,7 +724,11 @@ function renderSectors(rows, priceMap, latestVix) {
   var vix = latestVix || (rows[0] ? rows[0].vix : null);
   var updated = rows[0] && rows[0].date ? new Date(rows[0].date.replace(' ','T')).toLocaleDateString('en-IN', {day:'numeric',month:'short'}) : '';
 
-  var banner = '<div class="fii-banner"><div class="banner-item"><div class="banner-label">FII this week</div><div class="banner-value ' + (fii && fii > 0 ? 'val-green' : 'val-red') + '">' + (fii ? (fii > 0 ? '+' : '') + '₹' + Math.abs(fii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">DII this week</div><div class="banner-value ' + (dii && dii > 0 ? 'val-green' : 'val-red') + '">' + (dii ? (dii > 0 ? '+' : '') + '₹' + Math.abs(dii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">India VIX</div><div class="banner-value ' + (vix ? (vix < 15 ? 'val-green' : vix < 20 ? 'val-amber' : 'val-red') : 'val-muted') + '">' + (vix || '—') + '</div></div></div>';
+  var banner = '<div class="fii-banner">' +
+    '<div class="banner-item"><div class="banner-label">FII WEEKLY</div><div class="banner-value ' + (fii && fii > 0 ? 'val-green' : 'val-red') + '">' + (fii ? (fii > 0 ? '+' : '') + '₹' + Math.abs(fii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div>' +
+    '<div class="banner-item"><div class="banner-label">DII WEEKLY</div><div class="banner-value ' + (dii && dii > 0 ? 'val-green' : 'val-red') + '">' + (dii ? (dii > 0 ? '+' : '') + '₹' + Math.abs(dii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div>' +
+    '<div class="banner-item"><div class="banner-label">INDIA VIX</div><div class="banner-value ' + (vix ? (parseFloat(vix) < 15 ? 'val-green' : parseFloat(vix) < 20 ? 'val-amber' : 'val-red') : 'val-muted') + '">' + (vix || '—') + '</div></div>' +
+    '</div>';
 
   // Score tooltip button
   var scoreTT = '<button class="info-btn" onclick="toggleSectorTT(event)" style="margin-left:6px">i</button>' +
