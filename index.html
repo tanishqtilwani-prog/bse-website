@@ -694,7 +694,8 @@ async function loadSectors() {
   var el = document.getElementById('sectors-inner');
   try {
     // Load sector scores
-    var resp = await fetch(SUPABASE_URL + '/rest/v1/sector_heatmap?select=*&order=score.desc', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
+    var today = new Date().toISOString().slice(0,10);
+    var resp = await fetch(SUPABASE_URL + '/rest/v1/sector_heatmap?select=*&date=eq.' + today + '&order=score.desc', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
     var rows = await resp.json();
     if (!rows || rows.length === 0) { el.innerHTML = renderSectorsNoData(); return; }
 
@@ -707,16 +708,21 @@ async function loadSectors() {
       prows.forEach(function(p) { priceMap[p.symbol] = p; });
     }
 
-    el.innerHTML = renderSectors(rows, priceMap);
+    // Get VIX from market_pulse (same source as Pulse tab)
+    var vixResp = await fetch(SUPABASE_URL + '/rest/v1/market_pulse?select=vix_value&order=date.desc&limit=1', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
+    var vixData = await vixResp.json();
+    var latestVix = vixData && vixData[0] ? vixData[0].vix_value : null;
+
+    el.innerHTML = renderSectors(rows, priceMap, latestVix);
   } catch(e) {
     el.innerHTML = '<div class="sectors-loading"><div class="empty-icon">—</div><div class="loading-text">Failed to load sector data</div></div>';
   }
 }
 
-function renderSectors(rows, priceMap) {
+function renderSectors(rows, priceMap, latestVix) {
   var fii = rows[0] ? rows[0].fii_weekly : null;
   var dii = rows[0] ? rows[0].dii_weekly : null;
-  var vix = rows[0] ? rows[0].vix : null;
+  var vix = latestVix || (rows[0] ? rows[0].vix : null);
   var updated = rows[0] && rows[0].date ? new Date(rows[0].date.replace(' ','T')).toLocaleDateString('en-IN', {day:'numeric',month:'short'}) : '';
 
   var banner = '<div class="fii-banner"><div class="banner-item"><div class="banner-label">FII this week</div><div class="banner-value ' + (fii && fii > 0 ? 'val-green' : 'val-red') + '">' + (fii ? (fii > 0 ? '+' : '') + '₹' + Math.abs(fii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">DII this week</div><div class="banner-value ' + (dii && dii > 0 ? 'val-green' : 'val-red') + '">' + (dii ? (dii > 0 ? '+' : '') + '₹' + Math.abs(dii).toLocaleString('en-IN') + ' Cr' : '—') + '</div></div><div class="banner-item"><div class="banner-label">India VIX</div><div class="banner-value ' + (vix ? (vix < 15 ? 'val-green' : vix < 20 ? 'val-amber' : 'val-red') : 'val-muted') + '">' + (vix || '—') + '</div></div></div>';
