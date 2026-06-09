@@ -695,14 +695,17 @@ async function loadSectors() {
   try {
     var today = new Date().toISOString().slice(0,10);
 
-    // Load sector scores for today
-    var resp = await fetch(SUPABASE_URL + '/rest/v1/sector_heatmap?select=*&date=eq.' + today + '&order=score.desc', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
-    var rows = await resp.json();
-    if (!rows || rows.length === 0) { el.innerHTML = renderSectorsNoData(); return; }
+    // Load sector scores - use latest available date
+    var resp = await fetch(SUPABASE_URL + '/rest/v1/sector_heatmap?select=*&order=date.desc,score.desc&limit=64', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
+    var allRows = await resp.json();
+    if (!allRows || allRows.length === 0) { el.innerHTML = renderSectorsNoData(); return; }
+    // Get only the latest date's rows
+    var latestDate = allRows[0].date;
+    var rows = allRows.filter(function(r){ return r.date === latestDate; }).sort(function(a,b){ return (b.score||0)-(a.score||0); });
 
     // Today's prices for company list
     var priceMap = {};
-    var pr = await fetch(SUPABASE_URL + '/rest/v1/price_history?select=symbol,sector,close_price,prev_close,pct_change&date=eq.' + today + '&limit=1000', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
+    var pr = await fetch(SUPABASE_URL + '/rest/v1/price_history?select=symbol,sector,close_price,prev_close,pct_change&date=eq.' + latestDate + '&limit=1000', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
     var prows = await pr.json();
     if (prows && Array.isArray(prows)) prows.forEach(function(p) { priceMap[p.symbol] = p; });
 
