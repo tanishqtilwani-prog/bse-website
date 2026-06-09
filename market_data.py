@@ -484,7 +484,7 @@ def fetch_ad_ratio_bse():
                     verdict = "green" if ratio >= 1.5 else ("red" if ratio < 1 else "amber")
                     label   = "Healthy" if ratio >= 1.5 else ("Weak" if ratio < 1 else "Mixed")
                     print(f"A/D BSE 500: {up}/{dn} = {ratio}:1")
-                    return f"{ratio}:1", verdict, label
+                    return f"{up} ↑ / {dn} ↓", verdict, label
     except Exception as e:
         print(f"BSE A/D error: {e}")
     return None, "gray", "N/A"
@@ -493,6 +493,16 @@ def fetch_ad_ratio_bse():
 def collect_sectors(sectors, companies):
     print("\n── Collecting Sector data ──")
     today = date.today().isoformat()
+    
+    # Delete today's existing data first to prevent duplicates
+    try:
+        requests.delete(
+            f"{SUPABASE_URL}/rest/v1/sector_heatmap?date=eq.{today}",
+            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"},
+            timeout=10
+        )
+    except: pass
+
     sector_metrics = calculate_sector_metrics(sectors, companies)
     order_wins     = fetch_order_wins_by_sector(companies)
     vix_val, _, _  = fetch_vix_upstox()
@@ -522,7 +532,7 @@ def collect_pulse(sectors, companies):
     vix_val, vix_v, vix_l     = fetch_vix_upstox();          print(f"VIX: {vix_val}")
     nt_val, nt_v, nt_l        = fetch_nifty100_vs_200dma();   print(f"Nifty 100: {nt_val}")
     br_pct, br_v, br_l        = fetch_breadth_upstox(sectors, companies); print(f"Breadth: {br_pct}%")
-    ff, fv, fl, df, dv, dl    = None, "gray", "N/A", None, "gray", "N/A"; print("FII: None DII: None")
+    ff, fv, fl, df, dv, dl    = fetch_fii_dii_bse();          print(f"FII: {ff} DII: {df}")
     fii_fp, fii_fv, fii_fl    = fetch_fii_futures_nse();      print(f"FII futures: {fii_fp}%")
 
     # PCR from Upstox option chain
