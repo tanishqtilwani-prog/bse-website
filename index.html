@@ -679,7 +679,6 @@ function renderPulse(d, g) {
 
   return '<div class="mood-card"><div class="mood-header"><div><div class="mood-label">Market mood</div><div class="mood-value ' + moodClass(mood) + '">' + mood + '</div><div class="mood-score">' + greenCount + ' of 8 signals positive</div></div><div class="mood-updated">' + updated + '</div></div></div>' +
     renderGlobalCues(g) +
-    '<div class="fii-dii-row"><div class="mini-card"><div class="mini-label">FII today</div><div class="mini-value ' + valClass(d.fii_verdict) + '">' + (d.fii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div><div class="mini-card"><div class="mini-label">DII today</div><div class="mini-value ' + valClass(d.dii_verdict) + '">' + (d.dii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div></div>' +
     '<div class="section-title">Market signals</div>' +
     '<div class="signal-grid">' +
       sig('India VIX', 'Fear gauge', d.vix_value, '', d.vix_verdict, d.vix_label, 'vix') +
