@@ -21,7 +21,6 @@ def fmt(val):
     return f"{sign}₹{abs(int(val)):,} Cr"
 
 def fetch_nse_fii_dii():
-    """Returns (data_date_iso, fii_net, dii_net) or (None, None, None) on failure."""
     try:
         s = requests.Session()
         s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
@@ -68,7 +67,6 @@ def main():
         "Prefer": "return=minimal"
     }
 
-    # 1. Always display under TODAY's date, whether fresh or carried forward
     next_day = (datetime.strptime(today_ist, "%Y-%m-%d").date() + timedelta(days=1)).isoformat()
     requests.patch(
         f"{SUPABASE_URL}/rest/v1/market_pulse?date=gte.{today_ist}T00:00:00Z&date=lt.{next_day}T00:00:00Z",
@@ -84,7 +82,6 @@ def main():
         timeout=15
     )
 
-    # 2. Weekly-total table keyed to the REAL reported date - no double counting
     requests.post(
         f"{SUPABASE_URL}/rest/v1/fii_dii_daily",
         headers={**headers, "Prefer": "resolution=merge-duplicates,return=minimal"},
