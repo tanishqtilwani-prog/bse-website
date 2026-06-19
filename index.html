@@ -136,6 +136,12 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
 .sig-red{background:var(--red)}
 .sig-gray{background:var(--muted)}
 .fii-dii-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.global-cues-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:14px}
+.gc-box{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:5px 4px;text-align:center}
+.gc-label{font-size:7.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gc-row{display:flex;align-items:baseline;justify-content:center;gap:3px}
+.gc-value{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:var(--text)}
+.gc-pct{font-family:'JetBrains Mono',monospace;font-size:8px}
 .mini-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
 .mini-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
 .mini-value{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.5px}
@@ -610,7 +616,10 @@ async function loadPulse() {
     var resp = await fetch(SUPABASE_URL + '/rest/v1/market_pulse?select=*&order=date.desc&limit=1', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
     var rows = await resp.json();
     if (!rows || rows.length === 0) { el.innerHTML = renderPulseNoData(); return; }
-    el.innerHTML = renderPulse(rows[0]);
+    var gcResp = await fetch(SUPABASE_URL + '/rest/v1/global_cues?select=*&order=date.desc&limit=1', {headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}});
+    var gcRows = await gcResp.json();
+    var gc = (gcRows && gcRows.length > 0) ? gcRows[0] : null;
+    el.innerHTML = renderPulse(rows[0], gc);
   } catch(e) {
     el.innerHTML = '<div class="pulse-loading"><div class="empty-icon">—</div><div class="loading-text">Failed to load pulse data</div></div>';
   }
@@ -639,7 +648,7 @@ function valClass(verdict) {
   return 'val-amber';
 }
 
-function renderPulse(d) {
+function renderPulse(d, g) {
   var mood = d.overall_mood || 'Neutral';
   var greenCount = [d.vix_verdict, d.pcr_verdict, d.nifty_trend_verdict, d.fii_verdict, d.dii_verdict, d.ad_ratio_verdict, d.fii_futures_verdict, d.breadth_verdict].filter(function(v) { return dotClass(v) === 'sig-green'; }).length;
   var updated = ''; if (d.date) { try { var _d = new Date(d.date.replace(' ','T')); updated = _d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_d.getMonth()] + ', ' + String(_d.getHours()).padStart(2,'0') + ':' + String(_d.getMinutes()).padStart(2,'0'); } catch(e){} }
@@ -669,6 +678,7 @@ function renderPulse(d) {
   }
 
   return '<div class="mood-card"><div class="mood-header"><div><div class="mood-label">Market mood</div><div class="mood-value ' + moodClass(mood) + '">' + mood + '</div><div class="mood-score">' + greenCount + ' of 8 signals positive</div></div><div class="mood-updated">' + updated + '</div></div></div>' +
+    renderGlobalCues(g) +
     '<div class="fii-dii-row"><div class="mini-card"><div class="mini-label">FII today</div><div class="mini-value ' + valClass(d.fii_verdict) + '">' + (d.fii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div><div class="mini-card"><div class="mini-label">DII today</div><div class="mini-value ' + valClass(d.dii_verdict) + '">' + (d.dii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div></div>' +
     '<div class="section-title">Market signals</div>' +
     '<div class="signal-grid">' +
@@ -681,6 +691,37 @@ function renderPulse(d) {
       sig('FII futures', 'Long / short positioning', d.fii_futures_long_pct, '%', d.fii_futures_verdict, d.fii_futures_label, 'fiifut') +
       sig('% above 200 DMA', 'Nifty 500 participation', d.breadth_pct, '%', d.breadth_verdict, d.breadth_label, 'breadth') +
     '</div>';
+}
+
+function formatGc(val) {
+  if (val === null || val === undefined) return '—';
+  return Math.abs(val) >= 1000 ? Math.round(val).toLocaleString('en-IN') : val.toFixed(2);
+}
+
+function renderGlobalCues(g) {
+  if (!g) return '';
+  var items = [
+    ['USD Index', g.usd_index, g.usd_index_pct],
+    ['USD/INR', g.usdinr, g.usdinr_pct],
+    ['Brent', g.brent, g.brent_pct],
+    ['WTI Crude', g.wti, g.wti_pct],
+    ['Gold 10g', g.gold, g.gold_pct],
+    ['Silver kg', g.silver, g.silver_pct],
+    ['GIFT Nifty', g.gift_nifty, g.gift_nifty_pct],
+    ['Nikkei 225', g.nikkei225, g.nikkei225_pct],
+    ['Kospi', g.kospi, g.kospi_pct],
+    ['DAX', g.dax, g.dax_pct],
+    ['S&P 500', g.sp500, g.sp500_pct],
+    ['Dow Jones', g.dow_jones, g.dow_jones_pct]
+  ];
+  var boxes = items.map(function(it) {
+    var name = it[0], val = it[1], pct = it[2];
+    var cls = (pct > 0) ? 'val-green' : (pct < 0) ? 'val-red' : 'val-muted';
+    var arrow = (pct > 0) ? '▲' : (pct < 0) ? '▼' : '';
+    var pctStr = (pct === null || pct === undefined) ? '' : (arrow + Math.abs(pct).toFixed(2) + '%');
+    return '<div class="gc-box"><div class="gc-label">' + name + '</div><div class="gc-row"><span class="gc-value">' + formatGc(val) + '</span><span class="gc-pct ' + cls + '">' + pctStr + '</span></div></div>';
+  }).join('');
+  return '<div class="section-title">Global cues</div><div class="global-cues-grid">' + boxes + '</div>';
 }
 
 function renderPulseNoData() {
