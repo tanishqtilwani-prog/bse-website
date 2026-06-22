@@ -679,8 +679,7 @@ function renderPulse(d, g) {
 
   return '<div class="mood-card"><div class="mood-header"><div><div class="mood-label">Market mood</div><div class="mood-value ' + moodClass(mood) + '">' + mood + '</div><div class="mood-score">' + greenCount + ' of 8 signals positive</div></div><div class="mood-updated">' + updated + '</div></div></div>' +
     renderGlobalCues(g) +
-    '<div class="fii-dii-row"><div class="mini-card"><div class="mini-label">FII today</div><div class="mini-value ' + valClass(d.fii_verdict) + '">' + (d.fii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div><div class="mini-card"><div class="mini-label">DII today</div><div class="mini-value ' + valClass(d.dii_verdict) + '">' + (d.dii_flow || '—') + '</div><div class="mini-sub">Cash market</div></div></div>' +
-    '<div class="section-title">Market signals</div>' +
+    '<div class="section-title" style="display:flex;justify-content:space-between;align-items:baseline"><span>Market signals</span><span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.3px;font-weight:400">(Updated daily at 10 AM and 5:30 PM)</span></div>' +
     '<div class="signal-grid">' +
       sig('India VIX', 'Fear gauge', d.vix_value, '', d.vix_verdict, d.vix_label, 'vix') +
       sig('PCR Nifty', 'Put-call ratio', d.pcr_nifty, '', d.pcr_verdict, d.pcr_label, 'pcr') +
@@ -700,6 +699,13 @@ function formatGc(val) {
 
 function renderGlobalCues(g) {
   if (!g) return '';
+  var updated = '';
+  if (g.date) {
+    try {
+      var _gd = new Date(g.date.replace(' ','T'));
+      updated = _gd.getDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_gd.getMonth()] + ', ' + String(_gd.getHours()).padStart(2,'0') + ':' + String(_gd.getMinutes()).padStart(2,'0');
+    } catch(e) {}
+  }
   var items = [
     ['USD Index', g.usd_index, g.usd_index_pct],
     ['USD/INR', g.usdinr, g.usdinr_pct],
@@ -721,7 +727,7 @@ function renderGlobalCues(g) {
     var pctStr = (pct === null || pct === undefined) ? '' : (arrow + Math.abs(pct).toFixed(2) + '%');
     return '<div class="gc-box"><div class="gc-label">' + name + '</div><div class="gc-row"><span class="gc-value">' + formatGc(val) + '</span><span class="gc-pct ' + cls + '">' + pctStr + '</span></div></div>';
   }).join('');
-  return '<div class="section-title">Global cues</div><div class="global-cues-grid">' + boxes + '</div>';
+  return '<div class="section-title" style="display:flex;justify-content:space-between;align-items:baseline"><span>Global cues</span><span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.3px;font-weight:400">Updated ' + (updated || '—') + '</span></div><div class="global-cues-grid">' + boxes + '</div>';
 }
 
 function renderPulseNoData() {
@@ -849,7 +855,7 @@ function renderSectors(rows, priceMap, latestVix, weeklyFii, weeklyDii) {
   }).join('');
 
   return banner +
-    '<div class="section-title" style="position:relative;display:flex;align-items:center">Sector strength — ranked' + scoreTT + '</div>' +
+    '<div class="section-title" style="position:relative;display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center">Sector strength — ranked' + scoreTT + '</span><span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;letter-spacing:.3px;font-weight:400;flex-shrink:0;margin-left:8px">(Updated daily at 10 AM and 5:30 PM)</span></div>' +
     '<div class="sector-signal-list">' + rows_html + '</div>' +
     '<div class="last-updated">Updated ' + updated + ' · tap any sector to see companies · sorted strongest → weakest vs Nifty</div>';
 }
