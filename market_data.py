@@ -532,7 +532,31 @@ def collect_pulse(sectors, companies):
     vix_val, vix_v, vix_l     = fetch_vix_upstox();          print(f"VIX: {vix_val}")
     nt_val, nt_v, nt_l        = fetch_nifty100_vs_200dma();   print(f"Nifty 100: {nt_val}")
     br_pct, br_v, br_l        = fetch_breadth_upstox(sectors, companies); print(f"Breadth: {br_pct}%")
-    ff, fv, fl, df, dv, dl    = fetch_fii_dii_bse();          print(f"FII: {ff} DII: {df}")
+    try:
+        _s = requests.Session()
+        _s.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        _s.get("https://www.nseindia.com", timeout=10)
+        _r = _s.get("https://www.nseindia.com/api/fiidiiTradeReact", timeout=10)
+        _rows = _r.json() if _r.status_code == 200 else []
+        _fii_net = _dii_net = None
+        for _row in _rows:
+            _cat = _row.get("category", "")
+            _net = float(_row.get("netValue", 0))
+            if "FII" in _cat: _fii_net = _net
+            elif _cat == "DII": _dii_net = _net
+        if _fii_net is not None and _dii_net is not None:
+            ff = f"{'+' if _fii_net >= 0 else ''}₹{abs(int(_fii_net)):,} Cr"
+            fv = "green" if _fii_net > 0 else "red"
+            fl = "Buying" if _fii_net > 0 else "Selling"
+            df = f"{'+' if _dii_net >= 0 else ''}₹{abs(int(_dii_net)):,} Cr"
+            dv = "green" if _dii_net > 0 else "red"
+            dl = "Buying" if _dii_net > 0 else "Selling"
+        else:
+            ff, fv, fl, df, dv, dl = None, "gray", "N/A", None, "gray", "N/A"
+    except Exception as _e:
+        print(f"  FII/DII fetch error: {_e}")
+        ff, fv, fl, df, dv, dl = None, "gray", "N/A", None, "gray", "N/A"
+    print(f"FII: {ff} DII: {df}")
     fii_fp, fii_fv, fii_fl    = fetch_fii_futures_nse();      print(f"FII futures: {fii_fp}%")
 
     # PCR from Upstox option chain
@@ -563,22 +587,10 @@ def collect_pulse(sectors, companies):
         "ad_ratio": ad_val, "ad_ratio_verdict": ad_v, "ad_ratio_label": ad_l,
         "fii_futures_long_pct": fii_fp, "fii_futures_verdict": fii_fv, "fii_futures_label": fii_fl,
         "breadth_pct": br_pct, "breadth_verdict": br_v, "breadth_label": br_l,
+        "fii_flow": ff, "fii_verdict": fv, "fii_label": fl,
+        "dii_flow": df, "dii_verdict": dv, "dii_label": dl,
     })
 
-    # Carry forward FII/DII from previous day if not yet updated today
-    today = date.today().isoformat()
-    prev = supabase_select('market_pulse',
-        f'date=lt.{today}T00:00:00Z&order=date.desc&limit=1&select=fii_flow,fii_verdict,fii_label,dii_flow,dii_verdict,dii_label')
-    if prev and prev[0].get('fii_flow'):
-        requests.patch(
-            f"{SUPABASE_URL}/rest/v1/market_pulse?date=gte.{today}T00:00:00Z",
-            headers={"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}",
-                     "Content-Type": "application/json", "Prefer": "return=minimal"},
-            json={"fii_flow": prev[0]['fii_flow'], "fii_verdict": prev[0]['fii_verdict'],
-                  "fii_label": prev[0]['fii_label'], "dii_flow": prev[0]['dii_flow'],
-                  "dii_verdict": prev[0]['dii_verdict'], "dii_label": prev[0]['dii_label']},
-            timeout=10
-        )
     print(f"Pulse saved — Mood: {mood} ({green_count}/5 signals available)")
 
 def fetch_options_upstox(symbol="NSE_INDEX|Nifty 50", index_name="nifty"):
