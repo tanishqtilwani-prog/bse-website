@@ -13,6 +13,7 @@ SUPABASE_URL = "https://kbklmidusxqkbjgpsdlg.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDExNTcxNywiZXhwIjoyMDk1NjkxNzE3fQ.v-gWV939rbNfNSXxzSbzaGduDXvxFhB8f_MHEp0wlFY"
 CSV_100      = "/home/ubuntu/bse-website/ind_nifty100list.csv"
 CSV_TOTAL    = "/home/ubuntu/bse-website/ind_niftytotalmarket_list.csv"
+CSV_SYMBOL   = "/home/ubuntu/bse-website/bse_to_nse_symbol.csv"
 
 def load_names(csv_file):
     names = set()
@@ -30,6 +31,23 @@ def load_names(csv_file):
 
 NIFTY100_NAMES = load_names(CSV_100)
 NIFTYTOTAL_NAMES = load_names(CSV_TOTAL)
+
+def load_symbol_map(csv_file):
+    symbol_map = {}
+    try:
+        with open(csv_file, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                bse_code = row.get("bse_code", "").strip()
+                nse_sym  = row.get("nse_symbol", "").strip()
+                if bse_code and nse_sym:
+                    symbol_map[bse_code] = nse_sym
+        print(f"Loaded {len(symbol_map)} BSE→NSE symbol mappings")
+    except Exception as e:
+        print(f"Symbol map load failed: {e}")
+    return symbol_map
+
+BSE_SYMBOL_MAP = load_symbol_map(CSV_SYMBOL)
 
 def check_index(company_name, names_set):
     import re as _re
@@ -103,7 +121,7 @@ def extract_filing_url(msg):
         pass
     return None
 
-def save_to_supabase(message_id, text, company, scrip, category, is_nifty100, is_niftytotal, price, price_change, filing_url, msg_date=None):
+def save_to_supabase(message_id, text, company, scrip, category, is_nifty100, is_niftytotal, price, price_change, filing_url, nse_symbol=None, msg_date=None):
     record = {
         "message_id": message_id,
         "text": text,
@@ -116,6 +134,7 @@ def save_to_supabase(message_id, text, company, scrip, category, is_nifty100, is
         "price": price,
         "price_change": price_change,
         "filing_url": filing_url,
+        "nse_symbol": nse_symbol,
     }
     try:
         resp = requests.post(
@@ -157,6 +176,7 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
             is_niftytotal = check_index(company, NIFTYTOTAL_NAMES) if company else False
             price, price_change = extract_price(clean)
             filing_url = extract_filing_url(msg)
+            nse_symbol = BSE_SYMBOL_MAP.get(scrip) if scrip else None
             msg_date = msg.date.strftime("%Y-%m-%dT%H:%M:%SZ") if msg.date else None
             save_to_supabase(
                 message_id=msg.id,
@@ -169,6 +189,7 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
                 price=price,
                 price_change=price_change,
                 filing_url=filing_url,
+                nse_symbol=nse_symbol,
                 msg_date=msg_date
             )
         except Exception as e:
