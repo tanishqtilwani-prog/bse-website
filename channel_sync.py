@@ -188,6 +188,11 @@ def save_news(text, msg_date):
 
 with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
     print("BSE Channel Sync (Telethon) started!")
+    try:
+        client.get_entity(REDBOX_ID)
+        print("Redbox entity cached")
+    except Exception as e:
+        print(f"Redbox entity error: {e}")
 
     @client.on(events.NewMessage(chats=CHANNEL_IDS + [REDBOX_ID]))
     async def handler(event):
