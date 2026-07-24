@@ -10,7 +10,7 @@ API_ID       = 21598306
 API_HASH     = "3620b1fbc6c9559c410cf44d596a263b"
 SESSION_FILE = "/home/ubuntu/bse-website/tg_session"
 CHANNEL_IDS  = [-1003806349868, -1003975218278]
-REDBOX_ID = 1466781775
+REDBOX_ID = -1001466781775
 SUPABASE_URL = "https://kbklmidusxqkbjgpsdlg.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDExNTcxNywiZXhwIjoyMDk1NjkxNzE3fQ.v-gWV939rbNfNSXxzSbzaGduDXvxFhB8f_MHEp0wlFY"
 CSV_100      = "/home/ubuntu/bse-website/ind_nifty100list.csv"
@@ -197,6 +197,7 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
     @client.on(events.NewMessage(chats=CHANNEL_IDS + [REDBOX_ID]))
     async def handler(event):
         try:
+            print(f"Message received from chat_id: {event.chat_id}")
             if event.chat_id == REDBOX_ID:
                 text = event.message.text or ""
                 if text.strip():
