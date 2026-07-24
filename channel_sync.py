@@ -2,6 +2,7 @@ import re
 import time
 import csv
 import requests
+from datetime import datetime, timedelta, timezone
 from telethon.sync import TelegramClient, events
 from telethon.tl.types import MessageEntityUrl, MessageEntityTextUrl
 
@@ -197,12 +198,16 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
                 return
             save_news(text, event.message.date)
             # Cleanup news older than 3 days
-            requests.delete(
-                SUPABASE_URL + "/rest/v1/news",
-                headers={"apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Prefer": "return=minimal"},
-                params={"instrument_key": "eq.REDBOX", "published_at": "lt." + (datetime.utcnow() - timedelta(days=3)).isoformat()},
-                timeout=5
-            )
+            try:
+                cutoff = (datetime.utcnow() - timedelta(days=3)).isoformat()
+                requests.delete(
+                    SUPABASE_URL + "/rest/v1/news",
+                    headers={"apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Prefer": "return=minimal"},
+                    params={"instrument_key": "eq.REDBOX", "published_at": "lt." + cutoff},
+                    timeout=5
+                )
+            except:
+                pass
         except Exception as e:
             print(f"Redbox handler error: {e}")
 
