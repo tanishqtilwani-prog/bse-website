@@ -165,7 +165,7 @@ def save_news(text, msg_date):
             "company_name": "RedboxGlobal India",
             "heading": text[:500],
             "summary": "",
-            "article_link": "",
+            "article_link": str(msg_date.timestamp()) if msg_date else "",
             "thumbnail": "",
             "published_at": pub_iso
         }
@@ -181,6 +181,7 @@ def save_news(text, msg_date):
             json=record,
             timeout=10
         )
+        print(f"Supabase news response: {resp.status_code} {resp.text[:100]}")
         if resp.status_code in (200, 201):
             print("News saved: " + text[:60])
     except Exception as e:
@@ -197,8 +198,8 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
     @client.on(events.NewMessage(chats=CHANNEL_IDS + [REDBOX_ID]))
     async def handler(event):
         try:
-            print(f"Message received from chat_id: {event.chat_id}")
-            if event.chat_id == REDBOX_ID:
+            if event.chat_id == REDBOX_ID:  # -1001466781775
+                print(f"Redbox message: {event.message.text[:50] if event.message.text else None}")
                 text = event.message.text or ""
                 if text.strip():
                     save_news(text, event.message.date)
