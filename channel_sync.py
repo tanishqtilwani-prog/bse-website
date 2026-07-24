@@ -159,7 +159,6 @@ def save_to_supabase(message_id, text, company, scrip, category, is_nifty100, is
 
 def save_news(text, msg_date):
     try:
-        from datetime import timezone
         pub_iso = msg_date.astimezone(timezone.utc).isoformat() if msg_date else None
         record = {
             "instrument_key": "REDBOX",
