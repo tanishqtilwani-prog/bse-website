@@ -189,30 +189,14 @@ def save_news(text, msg_date):
 with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
     print("BSE Channel Sync (Telethon) started!")
 
-    @client.on(events.NewMessage(chats=REDBOX_USERNAME))
-    async def redbox_handler(event):
-        try:
-            text = event.message.text or ""
-            if not text.strip():
-                return
-            save_news(text, event.message.date)
-            # Cleanup news older than 3 days
-            try:
-                cutoff = (datetime.utcnow() - timedelta(days=3)).isoformat()
-                requests.delete(
-                    SUPABASE_URL + "/rest/v1/news",
-                    headers={"apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Prefer": "return=minimal"},
-                    params={"instrument_key": "eq.REDBOX", "published_at": "lt." + cutoff},
-                    timeout=5
-                )
-            except:
-                pass
-        except Exception as e:
-            print(f"Redbox handler error: {e}")
-
-    @client.on(events.NewMessage(chats=CHANNEL_IDS))
+    @client.on(events.NewMessage(chats=CHANNEL_IDS + [REDBOX_ID]))
     async def handler(event):
         try:
+            if event.chat_id == REDBOX_ID:
+                text = event.message.text or ""
+                if text.strip():
+                    save_news(text, event.message.date)
+                return
             msg = event.message
             text = msg.text or msg.message or ""
             if not text.strip():
