@@ -9,6 +9,7 @@ API_ID       = 21598306
 API_HASH     = "3620b1fbc6c9559c410cf44d596a263b"
 SESSION_FILE = "/home/ubuntu/bse-website/tg_session"
 CHANNEL_IDS  = [-1003806349868, -1003975218278]
+REDBOX_USERNAME = 'Indiaredboxglobal'
 SUPABASE_URL = "https://kbklmidusxqkbjgpsdlg.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtia2xtaWR1c3hxa2JqZ3BzZGxnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDExNTcxNywiZXhwIjoyMDk1NjkxNzE3fQ.v-gWV939rbNfNSXxzSbzaGduDXvxFhB8f_MHEp0wlFY"
 CSV_100      = "/home/ubuntu/bse-website/ind_nifty100list.csv"
@@ -155,8 +156,55 @@ def save_to_supabase(message_id, text, company, scrip, category, is_nifty100, is
     except Exception as e:
         print(f"Supabase failed: {e}")
 
+def save_news(text, msg_date):
+    try:
+        from datetime import timezone
+        pub_iso = msg_date.astimezone(timezone.utc).isoformat() if msg_date else None
+        record = {
+            "instrument_key": "REDBOX",
+            "company_name": "RedboxGlobal India",
+            "heading": text[:500],
+            "summary": "",
+            "article_link": "",
+            "thumbnail": "",
+            "published_at": pub_iso
+        }
+        news_headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY,
+            "Content-Type": "application/json",
+            "Prefer": "resolution=ignore-duplicates"
+        }
+        resp = requests.post(
+            SUPABASE_URL + "/rest/v1/news",
+            headers=news_headers,
+            json=record,
+            timeout=10
+        )
+        if resp.status_code in (200, 201):
+            print("News saved: " + text[:60])
+    except Exception as e:
+        print(f"save_news error: {e}")
+
 with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
     print("BSE Channel Sync (Telethon) started!")
+
+    @client.on(events.NewMessage(chats=REDBOX_USERNAME))
+    async def redbox_handler(event):
+        try:
+            text = event.message.text or ""
+            if not text.strip():
+                return
+            save_news(text, event.message.date)
+            # Cleanup news older than 3 days
+            requests.delete(
+                SUPABASE_URL + "/rest/v1/news",
+                headers={"apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Prefer": "return=minimal"},
+                params={"instrument_key": "eq.REDBOX", "published_at": "lt." + (datetime.utcnow() - timedelta(days=3)).isoformat()},
+                timeout=5
+            )
+        except Exception as e:
+            print(f"Redbox handler error: {e}")
 
     @client.on(events.NewMessage(chats=CHANNEL_IDS))
     async def handler(event):
