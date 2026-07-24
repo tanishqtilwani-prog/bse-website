@@ -431,7 +431,7 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
     <span class="nav-icon">⚖️</span><span>Derivatives</span>
   </button>
   <button class="nav-item" data-page="news" onclick="switchPage('news',this)">
-    <span class="nav-icon" style="font-size:18px;font-family:'JetBrains Mono',monospace;font-weight:700">NWS</span><span>News</span>
+    <span class="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg></span><span>News</span>
   </button>
 </nav>
 
@@ -1030,7 +1030,7 @@ function loadNews() {
       }
       html += '<a class="news-card" href="' + (item.article_link || '#') + '" target="_blank" rel="noopener">';
       if (item.thumbnail) {
-        html += '<img class="news-thumb" src="' + item.thumbnail + '" alt="" onerror="this.style.display='none'">';
+        html += '<img class="news-thumb" src="' + item.thumbnail + '" alt="">';
       }
       html += '<div class="news-body"><div class="news-heading">' + (item.heading || '') + '</div></div></a>';
     });
@@ -1079,7 +1079,7 @@ function fundSearchSuggest(q) {
   }).slice(0, 6);
   if (!matches.length) { box.innerHTML = ''; return; }
   box.innerHTML = matches.map(function(c) {
-    return '<div onclick="loadFundamentals('' + c.isin + '','' + c.company_name.replace(/'/g,"&#39;") + '')" style="padding:8px 12px;cursor:pointer;border-radius:8px;font-size:13px;background:var(--surface);margin-bottom:4px">' + c.company_name + '</div>';
+    return '<div onclick="loadFundamentals(\"' + c.isin + '\",\"' + c.company_name + '\")" style="padding:8px 12px;cursor:pointer;border-radius:8px;font-size:13px;background:var(--surface);margin-bottom:4px">' + c.company_name + '</div>';
   }).join('');
 }
 
