@@ -431,7 +431,7 @@ header{background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px
     <span class="nav-icon">⚖️</span><span>Derivatives</span>
   </button>
   <button class="nav-item" data-page="news" onclick="switchPage('news',this)">
-    <span class="nav-icon">📰</span><span>News</span>
+    <span class="nav-icon" style="font-size:18px;font-family:'JetBrains Mono',monospace;font-weight:700">NWS</span><span>News</span>
   </button>
 </nav>
 
@@ -578,7 +578,7 @@ function renderCard(post) {
   var screenerBtn = post.nse_symbol ? '<a class="action-btn" href="https://www.screener.in/company/' + post.nse_symbol + '/" target="_blank" rel="noopener">📊 Screener</a>' : '';
   var tgBtn = '<a class="action-btn" href="https://t.me/Nse_Bse_result" target="_blank" rel="noopener"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg> Channel</a>';
   var expandBtn = hasMore ? '<button class="action-btn" onclick="toggleExpand(\'' + id + '\')">▾ More</button>' : '';
-  return '<div class="post-card" id="' + id + '"><div class="card-top"><div class="company-name" style="cursor:pointer;text-decoration-line:underline;text-underline-offset:3px;text-decoration-style:dotted" onclick="loadFundamentalsFromAlert(this)" data-company="' + (post.company_name||'').replace(/"/g,'&quot;') + '">' + company + '</div><span class="card-time">' + formatTime(post.date) + '</span></div>' + (rawBody ? '<div class="card-body" id="b' + id + '">' + bodyDisplay + (hasMore ? '…' : '') + '</div>' : '') + '<div class="card-divider"></div><div class="card-footer"><div class="tags"><span class="tag ' + catClass + '">' + catLabel + '</span>' + (post.is_nifty100 ? '<span class="tag tag-nifty">Nifty 100</span>' : (post.is_niftytotal ? '<span class="tag tag-nifty" style="background:#0369a1;border-color:#0369a1">Total Mkt</span>' : '')) + (post.scrip_code ? '<span class="tag">' + post.scrip_code + '</span>' : '') + priceHtml + '</div><div class="card-actions">' + expandBtn + filingBtn + screenerBtn + tgBtn + '</div></div></div>';
+  return '<div class="post-card" id="' + id + '"><div class="card-top"><div class="company-name" style="cursor:pointer" onclick="loadFundamentalsFromAlert(this)" data-isin="' + (post.isin||'') + '" data-company="' + encodeURIComponent(post.company_name||'') + '">' + company + '</div><span class="card-time">' + formatTime(post.date) + '</span></div>' + (rawBody ? '<div class="card-body" id="b' + id + '">' + bodyDisplay + (hasMore ? '…' : '') + '</div>' : '') + '<div class="card-divider"></div><div class="card-footer"><div class="tags"><span class="tag ' + catClass + '">' + catLabel + '</span>' + (post.is_nifty100 ? '<span class="tag tag-nifty">Nifty 100</span>' : (post.is_niftytotal ? '<span class="tag tag-nifty" style="background:#0369a1;border-color:#0369a1">Total Mkt</span>' : '')) + (post.scrip_code ? '<span class="tag">' + post.scrip_code + '</span>' : '') + priceHtml + '</div><div class="card-actions">' + expandBtn + filingBtn + screenerBtn + tgBtn + '</div></div></div>';
 }
 
 function toggleExpand(id) {
@@ -1146,11 +1146,17 @@ function openFundamentalsForCompany(isin, company) {
 
 // ── LOAD FUNDAMENTALS FROM ALERT CARD ──
 function loadFundamentalsFromAlert(el) {
-  var company = el.getAttribute('data-company');
+  var company = decodeURIComponent(el.getAttribute('data-company') || '');
+  var isin = el.getAttribute('data-isin') || '';
   if (!company) return;
   openFundamentalsSearch();
   setTimeout(function() {
-    var match = _fundAllCompanies.find(function(c) {
+    if (_fundAllCompanies.length === 0) {
+      document.getElementById('fund-search-input').value = company;
+      return;
+    }
+    var match = isin ? _fundAllCompanies.find(function(c) { return c.isin === isin; }) : null;
+    if (!match) match = _fundAllCompanies.find(function(c) {
       return c.company_name.toLowerCase().indexOf(company.toLowerCase().split(' ')[0]) !== -1;
     });
     if (match) loadFundamentals(match.isin, match.company_name);
@@ -1158,7 +1164,7 @@ function loadFundamentalsFromAlert(el) {
       document.getElementById('fund-search-input').value = company;
       fundSearchSuggest(company);
     }
-  }, 300);
+  }, 400);
 }
 
 // ── PATCH switchPage TO LOAD NEWS ──
