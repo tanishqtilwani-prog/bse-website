@@ -1022,17 +1022,15 @@ function loadNews() {
       return;
     }
     var html = '';
-    var lastCompany = '';
     items.forEach(function(item) {
-      if (item.company_name !== lastCompany) {
-        html += '<div class="news-section-title">' + item.company_name + '</div>';
-        lastCompany = item.company_name;
+      var timeStr = '';
+      if (item.published_at) {
+        var d = new Date(item.published_at);
+        timeStr = '<div style="font-size:10px;color:var(--muted);margin-top:6px">' + d.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'}) + ' · ' + d.toLocaleDateString('en-IN', {day:'numeric',month:'short'}) + '</div>';
       }
-      html += '<a class="news-card" href="' + (item.article_link || '#') + '" target="_blank" rel="noopener">';
-      if (item.thumbnail) {
-        html += '<img class="news-thumb" src="' + item.thumbnail + '" alt="">';
-      }
-      html += '<div class="news-body"><div class="news-heading">' + (item.heading || '') + '</div></div></a>';
+      html += '<div class="news-card">';
+      html += '<div class="news-body"><div class="news-heading">' + (item.heading || '') + '</div>' + timeStr + '</div>';
+      html += '</div>';
     });
     container.innerHTML = html;
   })
