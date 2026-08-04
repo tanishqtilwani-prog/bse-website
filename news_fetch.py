@@ -94,6 +94,11 @@ def main():
         for key, items in news_data.items():
             company = instrument_map.get(key, "")
             for item in items:
+                pub_ms = item.get("published_time")
+                pub_iso = None
+                if pub_ms:
+                    from datetime import datetime, timezone
+                    pub_iso = datetime.fromtimestamp(pub_ms/1000, tz=timezone.utc).isoformat()
                 articles.append({
                     "instrument_key": key,
                     "company_name": company,
@@ -101,7 +106,7 @@ def main():
                     "summary": item.get("summary", ""),
                     "article_link": item.get("article_link", ""),
                     "thumbnail": item.get("thumbnail", ""),
-                    "published_at": None
+                    "published_at": pub_iso
                 })
         
         saved = save_to_supabase(articles)

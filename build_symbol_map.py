@@ -19,7 +19,7 @@ import csv
 import time
 from bse import BSE
 
-INPUT_CSV  = "master_companies.csv"   # symbol, company_name, isin
+INPUT_CSV  = "ind_niftytotalmarket_list.csv"   # symbol, company_name, isin
 OUTPUT_CSV = "bse_to_nse_symbol.csv"
 RESUME_CSV = "bse_to_nse_symbol.csv"  # if exists, resumes from where it left off
 
@@ -30,8 +30,8 @@ def main():
         with open(INPUT_CSV, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                isin   = row.get('isin', '').strip()
-                symbol = row.get('symbol', '').strip()
+                isin   = row.get('ISIN Code', '').strip()
+                symbol = row.get('Symbol', '').strip()
                 if isin and symbol:
                     companies.append({'isin': isin, 'nse_symbol': symbol})
     except Exception as e:
