@@ -214,7 +214,10 @@ with TelegramClient(SESSION_FILE, API_ID, API_HASH) as client:
             company = extract_company(clean)
             scrip = extract_scrip(clean)
             clean = clean_body(clean, scrip)
-            category = detect_category(clean)
+            if event.chat_id == -1003806349868:
+                category = "result"
+            else:
+                category = detect_category(clean)
             is_nifty100 = check_index(company, NIFTY100_NAMES) if company else False
             is_niftytotal = check_index(company, NIFTYTOTAL_NAMES) if company else False
             price, price_change = extract_price(clean)
