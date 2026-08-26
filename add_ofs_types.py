@@ -31,6 +31,7 @@ var CAL_ORDER = ['result','listing','bonus','rights','split','buyback','dividend
 NEW_TYPES = """var CAL_TYPES = {
   ofs:      { label: 'OFS',          color: '#dc2626' },
   ipo:      { label: 'IPO',          color: '#f59e0b' },
+  delisting:{ label: 'Delisting',    color: '#7c3aed' },
   buyback:  { label: 'Buyback',      color: '#ec4899' },
   result:   { label: 'Results',      color: '#d97706' },
   listing:  { label: 'New listing',  color: '#f97316' },
@@ -40,7 +41,7 @@ NEW_TYPES = """var CAL_TYPES = {
   dividend: { label: 'Dividend',     color: '#16a34a' },
   corp_action: { label: 'Other',     color: '#64748b' }
 };
-var CAL_ORDER = ['ofs','ipo','buyback','listing','bonus','rights','split','result','dividend','corp_action'];"""
+var CAL_ORDER = ['ofs','ipo','delisting','buyback','listing','bonus','rights','split','result','dividend','corp_action'];"""
 
 if OLD_TYPES not in html:
     print("\nFAILED: could not find CAL_TYPES block.")
