@@ -69,6 +69,35 @@ def parse_date(s):
 
 # -- corporate actions -------------------------------------
 
+MONTHS_RE = ("january|february|march|april|may|june|july|august|"
+             "september|october|november|december")
+
+
+def date_in_text(text):
+    m = re.search(r"(" + MONTHS_RE + r")\s+(\d{1,2}),?\s+(\d{4})", str(text), re.IGNORECASE)
+    if m:
+        try:
+            return datetime.strptime(f"{m.group(1)[:3]} {m.group(2)} {m.group(3)}", "%b %d %Y").strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+    m = re.search(r"(\d{1,2})\s+(" + MONTHS_RE + r")\s+(\d{4})", str(text), re.IGNORECASE)
+    if m:
+        try:
+            return datetime.strptime(f"{m.group(2)[:3]} {m.group(1)} {m.group(3)}", "%b %d %Y").strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+    return None
+
+
+def is_new_listing_circular(subject):
+    s = subject.lower()
+    if "new securities" in s or "further securities" in s:
+        return False
+    if "esop" in s or "esos" in s or "warrant" in s:
+        return False
+    return "listing of equity shares" in s
+
+
 def classify_action(purpose):
     p = purpose.lower()
     if "bonus" in p:
@@ -229,6 +258,7 @@ def collect():
     end = today + timedelta(days=DAYS_AHEAD)
     rows = {}
     skipped = []
+    listed_names = set()
 
     def add(date, etype, company, scrip, details, url=""):
         if not date or not company:
@@ -275,8 +305,11 @@ def collect():
             if isinstance(nl, dict):
                 nl = nl.get("Table", [])
             for n in nl:
-                add(parse_date(n.get("NEWS_DT")), "listing",
-                    n.get("SLONGNAME"), n.get("SCRIP_CD"), "New listing")
+                d = date_in_text(str(n.get("HEADLINE", ""))) or parse_date(n.get("NEWS_DT"))
+                nm = n.get("SLONGNAME")
+                if nm:
+                    listed_names.add(name_key(str(nm)))
+                add(d, "listing", nm, n.get("SCRIP_CD"), "Listed and admitted to dealings")
             print(f"  listings  ok ({len(nl)})")
         except Exception as e:
             print(f"  listings  FAILED: {e}")
@@ -289,8 +322,18 @@ def collect():
                 circ = circ.get("Table", [])
 
             best = {}
+            upcoming = {}
             for c in circ:
                 subject = str(c.get("Subject", "")).strip()
+                if is_new_listing_circular(subject):
+                    nm = re.sub(r"^listing of equity shares of\s*", "", subject, flags=re.IGNORECASE).strip(" .")
+                    nm = re.sub(r"\s*\(.*$", "", nm).strip()
+                    d = parse_date(c.get("Notice_Date"))
+                    if nm and d and 3 <= len(nm) <= 90:
+                        k = name_key(nm)
+                        if k not in listed_names and (k not in upcoming or d < upcoming[k]["date"]):
+                            upcoming[k] = {"date": d, "company": titlecase(nm)}
+                    continue
                 etype = classify_circular(subject)
                 if not etype:
                     continue
@@ -332,8 +375,14 @@ def collect():
                     add(d.strftime("%Y-%m-%d"), etype, v["company"],
                         "C" + nkey[:20], det, v["url"])
 
+            for k, v in upcoming.items():
+                d0 = datetime.strptime(v["date"], "%Y-%m-%d")
+                nxt = business_days(d0, 1, 1)[0]
+                add(nxt.strftime("%Y-%m-%d"), "listing", v["company"], "L" + k[:20], "Listing expected")
+
             print(f"  circulars ok ({len(circ)} scanned -> {len(best)} events, "
-                  f"{len(skipped)} unparsed)")
+                  f"{len(upcoming)} upcoming listings, "
+                  f"{projected} projected, {len(skipped)} unparsed)")
         except Exception as e:
             print(f"  circulars FAILED: {e}")
 
