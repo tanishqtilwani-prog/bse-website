@@ -32,6 +32,19 @@ CONFLICT_COLS = "event_date,scrip_code,event_type"
 
 DAYS_AHEAD = 60
 CIRCULAR_LOOKBACK = 15
+
+# BSE notices carry the NOTICE date, not the event date. These offsets
+# convert notice date -> event window, in trading days.
+#   OFS  : notice is T-1, offer runs 2 days   (verified: Hindustan Copper
+#          notice 24 Aug -> OFS 25 & 26 Aug)
+#   IPO  : anchor allocation is T-1, issue runs 3 days
+#   Buyback / delisting : tender window is ~5 trading days from open
+WINDOWS = {
+    "ofs":       (1, 2),
+    "ipo":       (1, 3),
+    "buyback":   (1, 5),
+    "delisting": (1, 5),
+}
 RETAIN_DAYS = 45
 
 DEBUG_SUBJECTS = True      # print raw notice subject next to parsed name
@@ -80,6 +93,31 @@ def clean_purpose(purpose):
 
 
 # -- exchange notices --------------------------------------
+
+def business_days(start, lo, hi):
+    """Trading days start+lo .. start+hi, skipping weekends."""
+    out, n, off = [], 0, 0
+    while len(out) < hi:
+        off += 1
+        d = start + timedelta(days=off)
+        if d.weekday() >= 5:          # Sat / Sun
+            continue
+        n += 1
+        if n >= lo:
+            out.append(d)
+    return out
+
+
+def is_anchor(subject, etype):
+    """Only the OPENING notice sets the window. Follow-ups (settlement
+    schedule, oversubscription) would otherwise anchor us weeks late."""
+    s = subject.lower()
+    if "settlement schedule" in s:
+        return False
+    if etype == "ipo":
+        return "public issue" in s
+    return "opening of" in s
+
 
 def classify_circular(subject):
     s = subject.lower()
@@ -256,6 +294,8 @@ def collect():
                 etype = classify_circular(subject)
                 if not etype:
                     continue
+                if not is_anchor(subject, etype):
+                    continue
                 company = company_from_subject(subject)
                 date = parse_date(c.get("Notice_Date"))
                 if not company:
@@ -276,8 +316,21 @@ def collect():
                      "ipo": "IPO / public issue"}
 
             for (nkey, etype), v in best.items():
-                add(v["date"], etype, v["company"], "C" + nkey[:20],
-                    label.get(etype, "Exchange notice"), v["url"])
+                lo, hi = WINDOWS.get(etype, (1, 1))
+                d0 = datetime.strptime(v["date"], "%Y-%m-%d")
+                days = business_days(d0, lo, hi)
+                total = len(days)
+                base = label.get(etype, "Exchange notice")
+                for i, d in enumerate(days, 1):
+                    if etype == "ofs" and total == 2:
+                        leg = "non-retail / HNI day" if i == 1 else "retail day"
+                    elif total > 1:
+                        leg = f"day {i} of {total}"
+                    else:
+                        leg = ""
+                    det = f"{base} \u00b7 {leg}" if leg else base
+                    add(d.strftime("%Y-%m-%d"), etype, v["company"],
+                        "C" + nkey[:20], det, v["url"])
 
             print(f"  circulars ok ({len(circ)} scanned -> {len(best)} events, "
                   f"{len(skipped)} unparsed)")
@@ -346,3 +399,4 @@ if __name__ == "__main__":
     n = push(events)
     purge()
     print(f"\nSaved {n} events")
+ 
