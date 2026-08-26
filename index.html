@@ -1057,16 +1057,19 @@ function renderDerivNoData() {
 
 // ── CALENDAR TAB ──
 var CAL_TYPES = {
+  ofs:      { label: 'OFS',          color: '#dc2626' },
+  ipo:      { label: 'IPO',          color: '#f59e0b' },
+  delisting:{ label: 'Delisting',    color: '#7c3aed' },
+  buyback:  { label: 'Buyback',      color: '#ec4899' },
   result:   { label: 'Results',      color: '#d97706' },
-  dividend: { label: 'Dividend',     color: '#16a34a' },
+  listing:  { label: 'New listing',  color: '#f97316' },
   bonus:    { label: 'Bonus',        color: '#3b82f6' },
   rights:   { label: 'Rights',       color: '#a855f7' },
   split:    { label: 'Split',        color: '#14b8a6' },
-  buyback:  { label: 'Buyback',      color: '#ec4899' },
-  listing:  { label: 'New listing',  color: '#f97316' },
+  dividend: { label: 'Dividend',     color: '#16a34a' },
   corp_action: { label: 'Other',     color: '#64748b' }
 };
-var CAL_ORDER = ['result','listing','bonus','rights','split','buyback','dividend','corp_action'];
+var CAL_ORDER = ['ofs','ipo','delisting','buyback','listing','bonus','rights','split','result','dividend','corp_action'];
 var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 var _calCursor = new Date();          // month being viewed
