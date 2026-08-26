@@ -8,8 +8,7 @@ Sources (all via the BSE library):
   * circulars()                 -> OFS, buyback, IPO  (exchange notices)
 
 Note: BSE ignores the date-range params on actions(); it always returns
-"all forthcoming" actions. That's fine - we upsert daily and let the
-table accumulate.
+"all forthcoming" actions. We upsert daily and let the table accumulate.
 
 Run daily via pm2 cron.
 """
@@ -28,15 +27,19 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
+# must match the unique index on calendar_events
+CONFLICT_COLS = "event_date,scrip_code,event_type"
+
 DAYS_AHEAD = 60
-CIRCULAR_LOOKBACK = 15     # how far back to scan exchange notices
-RETAIN_DAYS = 45           # keep this much history before purging
+CIRCULAR_LOOKBACK = 15
+RETAIN_DAYS = 45
+
+DEBUG_SUBJECTS = True      # print raw notice subject next to parsed name
 
 
-# -- helpers ---------------------------------------------
+# -- date --------------------------------------------------
 
 def parse_date(s):
-    """BSE gives '26 Aug 2026' or '2026-08-25T00:00:00'. -> 'YYYY-MM-DD'."""
     if not s:
         return None
     s = str(s).strip()
@@ -50,6 +53,8 @@ def parse_date(s):
     except ValueError:
         return None
 
+
+# -- corporate actions -------------------------------------
 
 def classify_action(purpose):
     p = purpose.lower()
@@ -67,7 +72,6 @@ def classify_action(purpose):
 
 
 def clean_purpose(purpose):
-    """'Final Dividend - Rs. - 1.2500' -> 'Final Dividend Rs 1.25'"""
     p = re.sub(r"\s*-\s*", " ", str(purpose)).strip()
     p = re.sub(r"\s+", " ", p)
     p = re.sub(r"(\d+\.\d*?)0+\b", r"\1", p)
@@ -75,87 +79,113 @@ def clean_purpose(purpose):
     return p.strip()
 
 
+# -- exchange notices --------------------------------------
+
 def classify_circular(subject):
-    """Return event_type for an exchange notice, or None to ignore it."""
     s = subject.lower()
     if "offer for sale" in s:
         return "ofs"
-    if "buyback" in s or "buy back" in s or "acquisition window" in s:
-        return "buyback"
-    if "tender offer" in s:
+    if any(k in s for k in ("buyback", "buy back", "acquisition window",
+                            "offer to buy", "tender offer")):
         return "buyback"
     if "public issue" in s:
         return "ipo"
     return None
 
 
-# strip these leading phrases before pulling the company name out
-CIRC_PREFIXES = [
-    r"^opening of offer to buy\s*[\u2013-]?\s*acquisition window\s*\(buyback\)\s*for\s*",
-    r"^opening of offer for sale\s+offer for sale\s+for\s*",
-    r"^opening of offer for sale\s+for\s*",
-    r"^opening of offer for sale\s*",
-    r"^tender offer\s*\(buyback\)\s*of equity shares\s*(of)?\s*",
-    r"^buyback of the equity shares of\s*",
-    r"^buyback of the shares of\s*",
-    r"^buyback of\s*",
-    r"^public issue of\s*",
-    r"^offer for sale\s*(for|of)?\s*",
+# every bit of notice boilerplate, stripped wherever it appears
+JARGON = [
+    r"revised settlement schedule",
+    r"settlement schedule",
+    r"live activities schedule",
+    r"oversubscription notice",
+    r"acquisition window",
+    r"opening of",
+    r"offer to buy",
+    r"offer for sale",
+    r"tender offer",
+    r"public issue",
+    r"buyback of the equity shares",
+    r"buyback of the shares",
+    r"buyback",
+    r"buy back",
+    r"of equity shares",
+    r"equity shares",
+    r"from open market",
+    r"through stock exchange",
+    r"through the stock exchange",
+    r"stock exchange mechanism",
+    r"allocation to anchor investors",
+    r"anchor investors",
+    r"bidding period",
+    r"non retail",
+    r"non-retail",
+    r"retail investors",
+    r"scrip code\s*:?\s*\d+",
 ]
 
-# cut the company name off at any of these
-CIRC_TAILS = [
-    r"\s+from open market.*$",
-    r"\s+through stock exchange.*$",
-    r"\s*\(.*$",
-    r"\s*[\u2013-]\s+.*$",
-    r"\s*,\s*the\s+.*$",
-    r"\s*\.\s*$",
-]
+# if any of these survive, the parse failed
+POISON = ["offer", "schedule", "window", "notice", "issue", "buyback",
+          "tender", "bidding", "investors"]
 
 
 def company_from_subject(subject):
     s = " ".join(str(subject).split())
+
+    s = re.sub(r"\(.*?\)", " ", s)          # drop bracketed asides
+    s = re.sub(r"\(.*$", " ", s)            # and any unclosed bracket
+    for pat in JARGON:
+        s = re.sub(pat, " ", s, flags=re.IGNORECASE)
+
+    s = re.sub(r"[\u2013\u2014]", "-", s)
+    s = re.sub(r"\s+", " ", s).strip(" -")  # clear dangling dashes first
+    parts = [p.strip() for p in s.split(" - ") if p.strip()]
+    s = parts[0] if parts else ""            # keep the head, drop trailing detail
+    s = re.sub(r"[\"\u201c\u201d'.,:;]", " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+
+    # trim dangling joiners left behind by the strips
+    s = re.sub(r"^(for|of|the|and|to|in|by)\b\s*", "", s, flags=re.IGNORECASE)
+    s = re.sub(r"\s*\b(for|of|the|and|to|in|by)$", "", s, flags=re.IGNORECASE)
+    s = s.strip(" -")
+
+    if not (3 <= len(s) <= 90):
+        return ""
     low = s.lower()
-    for pat in CIRC_PREFIXES:
-        m = re.match(pat, low)
-        if m:
-            s = s[m.end():]
-            break
-    for pat in CIRC_TAILS:
-        s = re.sub(pat, "", s, flags=re.IGNORECASE)
-    s = s.strip(" .,-\u2013")
-    return s if 3 <= len(s) <= 90 else ""
+    if any(w in low for w in POISON):
+        return ""
+    if not re.search(r"[A-Za-z]{3}", s):
+        return ""
+    return s
 
 
 def name_key(name):
-    """Normalise so 'Hindustan Copper Limited' == 'HINDUSTAN COPPER LTD'."""
-    k = name.upper()
+    """Hindustan Copper Limited == HINDUSTAN COPPER LTD; & == And."""
+    k = name.upper().replace("&", " AND ")
     k = re.sub(r"[^A-Z0-9 ]", " ", k)
-    k = re.sub(r"\b(LIMITED|LTD|THE)\b", "", k)
+    k = re.sub(r"\b(LIMITED|LTD|THE|PVT|PRIVATE)\b", " ", k)
     return re.sub(r"\s+", "", k)
 
 
 def titlecase(name):
-    """'HINDUSTAN COPPER LTD' -> 'Hindustan Copper Ltd'; leave mixed case alone."""
     if name.isupper():
         return " ".join(w.capitalize() for w in name.split())
     return name
 
 
-# -- collection ------------------------------------------
+# -- collection --------------------------------------------
 
 def collect():
     today = datetime.now()
     start = today - timedelta(days=RETAIN_DAYS)
     end = today + timedelta(days=DAYS_AHEAD)
     rows = {}
+    skipped = []
 
     def add(date, etype, company, scrip, details, url=""):
         if not date or not company:
             return
-        key = (date, str(scrip), etype)
-        rows[key] = {
+        rows[(date, str(scrip), etype)] = {
             "event_date": date,
             "event_type": etype,
             "company_name": str(company).strip(),
@@ -177,7 +207,7 @@ def collect():
         except Exception as e:
             print(f"  results   FAILED: {e}")
 
-        # 2. CORPORATE ACTIONS (record date)
+        # 2. CORPORATE ACTIONS
         try:
             acts = b.actions(by_date="record", from_date=start, to_date=end)
             for a in acts:
@@ -210,8 +240,6 @@ def collect():
             if isinstance(circ, dict):
                 circ = circ.get("Table", [])
 
-            # one company gets several notices for the same event -
-            # keep only the earliest notice per (company, type)
             best = {}
             for c in circ:
                 subject = str(c.get("Subject", "")).strip()
@@ -219,18 +247,18 @@ def collect():
                 if not etype:
                     continue
                 company = company_from_subject(subject)
-                if not company:
-                    continue
                 date = parse_date(c.get("Notice_Date"))
+                if not company:
+                    skipped.append(subject)
+                    continue
                 if not date:
                     continue
                 k = (name_key(company), etype)
                 if k not in best or date < best[k]["date"]:
-                    best[k] = {
-                        "date": date,
-                        "company": titlecase(company),
-                        "url": str(c.get("FileName", "")),
-                    }
+                    best[k] = {"date": date,
+                               "company": titlecase(company),
+                               "subject": subject,
+                               "url": str(c.get("FileName", ""))}
 
             label = {"ofs": "Offer for Sale",
                      "buyback": "Buyback offer",
@@ -240,29 +268,31 @@ def collect():
                 add(v["date"], etype, v["company"], "C" + nkey[:20],
                     label.get(etype, "Exchange notice"), v["url"])
 
-            print(f"  circulars ok ({len(circ)} scanned -> {len(best)} events)")
+            print(f"  circulars ok ({len(circ)} scanned -> {len(best)} events, "
+                  f"{len(skipped)} unparsed)")
         except Exception as e:
             print(f"  circulars FAILED: {e}")
 
-    return list(rows.values())
+    return list(rows.values()), best if 'best' in dir() else {}, skipped
 
 
-# -- write -----------------------------------------------
+# -- write -------------------------------------------------
 
 def push(records):
+    url = (SUPABASE_URL + "/rest/v1/calendar_events?on_conflict=" + CONFLICT_COLS)
     saved = 0
     for i in range(0, len(records), 200):
         batch = records[i:i + 200]
         try:
             r = requests.post(
-                SUPABASE_URL + "/rest/v1/calendar_events",
+                url,
                 headers={**HEADERS,
                          "Prefer": "resolution=merge-duplicates,return=minimal"},
                 json=batch, timeout=30)
             if r.status_code in (200, 201, 204):
                 saved += len(batch)
             else:
-                print(f"  supabase {r.status_code}: {r.text[:150]}")
+                print(f"  supabase {r.status_code}: {r.text[:180]}")
         except Exception as e:
             print(f"  push error: {e}")
     return saved
@@ -281,7 +311,7 @@ def purge():
 
 if __name__ == "__main__":
     print(f"Calendar fetch {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    events = collect()
+    events, best, skipped = collect()
     print(f"Collected {len(events)} events")
 
     counts = {}
@@ -290,12 +320,16 @@ if __name__ == "__main__":
     for k, v in sorted(counts.items(), key=lambda x: -x[1]):
         print(f"  {v:5d}  {k}")
 
-    # show notice-derived ones so you can eyeball the name parsing
     special = [e for e in events if e["event_type"] in ("ofs", "buyback", "ipo")]
     if special:
         print("\n  From exchange notices:")
         for e in sorted(special, key=lambda x: x["event_date"]):
             print(f"    {e['event_date']}  {e['event_type']:8} {e['company_name']}")
+
+    if DEBUG_SUBJECTS and skipped:
+        print(f"\n  Unparsed subjects ({len(skipped)}) - first 10:")
+        for s in skipped[:10]:
+            print(f"    {s[:105]}")
 
     n = push(events)
     purge()
