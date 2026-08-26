@@ -83,6 +83,8 @@ def clean_purpose(purpose):
 
 def classify_circular(subject):
     s = subject.lower()
+    if "delisting" in s:
+        return "delisting"
     if "offer for sale" in s:
         return "ofs"
     if any(k in s for k in ("buyback", "buy back", "acquisition window",
@@ -95,6 +97,8 @@ def classify_circular(subject):
 
 # every bit of notice boilerplate, stripped wherever it appears
 JARGON = [
+    r"voluntary delisting",
+    r"delisting",
     r"revised settlement schedule",
     r"settlement schedule",
     r"live activities schedule",
@@ -122,6 +126,9 @@ JARGON = [
     r"non-retail",
     r"retail investors",
     r"scrip code\s*:?\s*\d+",
+    r"reverse book building",
+    r"\bshares?\b",
+    r"\bequity\b",
 ]
 
 # if any of these survive, the parse failed
@@ -147,6 +154,9 @@ def company_from_subject(subject):
     # trim dangling joiners left behind by the strips
     s = re.sub(r"^(for|of|the|and|to|in|by)\b\s*", "", s, flags=re.IGNORECASE)
     s = re.sub(r"\s*\b(for|of|the|and|to|in|by)$", "", s, flags=re.IGNORECASE)
+    s = s.strip(" -")
+    s = re.sub(r"\s+[a-z]$", "", s)          # trailing 's' etc left by strips
+    s = re.sub(r"'s\b", "", s, flags=re.IGNORECASE)
     s = s.strip(" -")
 
     if not (3 <= len(s) <= 90):
@@ -261,6 +271,7 @@ def collect():
                                "url": str(c.get("FileName", ""))}
 
             label = {"ofs": "Offer for Sale",
+                     "delisting": "Delisting offer",
                      "buyback": "Buyback offer",
                      "ipo": "IPO / public issue"}
 
@@ -320,7 +331,8 @@ if __name__ == "__main__":
     for k, v in sorted(counts.items(), key=lambda x: -x[1]):
         print(f"  {v:5d}  {k}")
 
-    special = [e for e in events if e["event_type"] in ("ofs", "buyback", "ipo")]
+    special = [e for e in events
+               if e["event_type"] in ("ofs", "buyback", "ipo", "delisting")]
     if special:
         print("\n  From exchange notices:")
         for e in sorted(special, key=lambda x: x["event_date"]):
