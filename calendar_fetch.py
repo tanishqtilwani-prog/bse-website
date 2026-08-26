@@ -380,6 +380,18 @@ def collect():
                 nxt = business_days(d0, 1, 1)[0]
                 add(nxt.strftime("%Y-%m-%d"), "listing", v["company"], "L" + k[:20], "Listing expected")
 
+            projected = 0
+            for (nkey, etype), v in best.items():
+                if etype != "ipo" or nkey in listed_names:
+                    continue
+                d0 = datetime.strptime(v["date"], "%Y-%m-%d")
+                lo, hi = WINDOWS["ipo"]
+                close = business_days(d0, lo, hi)[-1]
+                listing = business_days(close, 3, 3)[0]
+                add(listing.strftime("%Y-%m-%d"), "listing", v["company"],
+                    "P" + nkey[:20], "Listing expected (from IPO close)")
+                projected += 1
+
             print(f"  circulars ok ({len(circ)} scanned -> {len(best)} events, "
                   f"{len(upcoming)} upcoming listings, "
                   f"{projected} projected, {len(skipped)} unparsed)")
