@@ -123,13 +123,30 @@ def clean_purpose(purpose):
 
 # -- exchange notices --------------------------------------
 
+# NSE/BSE trading holidays. Weekends are handled separately.
+# Verify against the exchange list each year; a missing date only
+# shifts a computed window by one day, it never breaks anything.
+NSE_HOLIDAYS = {
+    # 2026
+    "2026-01-26", "2026-02-15", "2026-03-04", "2026-03-21", "2026-03-31",
+    "2026-04-01", "2026-04-03", "2026-04-14", "2026-05-01", "2026-08-15",
+    "2026-08-28", "2026-10-02", "2026-10-21", "2026-11-09", "2026-11-24",
+    "2026-12-25",
+    # 2027
+    "2027-01-26", "2027-03-11", "2027-03-25", "2027-04-14", "2027-05-01",
+    "2027-08-15", "2027-10-02", "2027-11-09", "2027-12-25",
+}
+
+
 def business_days(start, lo, hi):
-    """Trading days start+lo .. start+hi, skipping weekends."""
+    """Trading days start+lo .. start+hi, skipping weekends and holidays."""
     out, n, off = [], 0, 0
-    while len(out) < hi:
+    while len(out) < hi and off < 90:
         off += 1
         d = start + timedelta(days=off)
-        if d.weekday() >= 5:          # Sat / Sun
+        if d.weekday() >= 5:                          # Sat / Sun
+            continue
+        if d.strftime("%Y-%m-%d") in NSE_HOLIDAYS:    # market holiday
             continue
         n += 1
         if n >= lo:
