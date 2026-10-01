@@ -57,6 +57,7 @@ ADDIND,Addi Industries Limited,INE757C01021
 ADFFOODS,ADF Foods Limited,INE982B01027
 ADL,Archidply Decor Limited,INE0CHO01012
 ADOR,Ador Welding Limited,INE045A01017
+ADROITIND,Adroit Industries (India) Limited,INE505M01015
 ADROITINFO,Adroit Infotech Limited,INE737B01033
 ADSL,Allied Digital Services Limited,INE102I01027
 ADVAIT,Advait Energy Transitions Limited,INE0ALI01010
@@ -81,6 +82,7 @@ AFIL,Akme Fintrade (India) Limited,INE916Y01027
 AFSL,Abans Financial Services Limited,INE00ZE01026
 AGARIND,Agarwal Industrial Corporation Limited,INE204E01012
 AGARWALEYE,Dr. Agarwal's Health Care Limited,INE943P01029
+AGASTYAEN,Agastya Energy and Infrastructure Limited,INE753W01010
 AGI,AGI Greenpac Limited,INE415A01038
 AGIIL,Agi Infra Limited,INE976R01033
 AGL,Allcargo Global Limited,INE1YPB01014
@@ -159,6 +161,7 @@ ANTHEM,Anthem Biosciences Limited,INE0CZ201020
 ANUHPHR,Anuh Pharma Limited,INE489G01022
 ANUP,The Anup Engineering Limited,INE294Z01018
 ANURAS,Anupam Rasayan India Limited,INE930P01018
+AONESTEELS,A-One Steels India Limited,INE0OTC01025
 APARINDS,Apar Industries Limited,INE372A01015
 APCL,Anjani Portland Cement Limited,INE071F01012
 APCOTEXIND,Apcotex Industries Limited,INE116A01032
@@ -189,6 +192,7 @@ ARIHANTSUP,Arihant Superstructures Limited,INE643K01018
 ARIS,Arisinfra Solutions Limited,INE0H9P01028
 ARKADE,Arkade Developers Limited,INE0QRL01017
 ARMANFIN,Arman Financial Services Limited,INE109C01017
+ARMEE,ArMee Infotech Limited,INE0TWE01016
 AROGRANITE,Aro Granite Industries Limited,INE210C01013
 ARROWGREEN,Arrow Greentech Limited,INE570D01018
 ARSHIYA,Arshiya Limited,INE968D01022
@@ -333,7 +337,6 @@ BESTAGRO,Best Agrolife Limited,INE052T01021
 BETA,Beta Drugs Limited,INE351Y01019
 BFINVEST,BF Investment Limited,INE878K01010
 BFUTILITIE,BF Utilities Limited,INE243D01012
-BGLOBAL,Bharatiya Global Infomedia Limited,INE224M01013
 BGRENERGY,BGR Energy Systems Limited,INE661I01014
 BHAGCHEM,Bhagiradha Chemicals & Industries Limited,INE414D01027
 BHAGERIA,Bhageria Industries Limited,INE354C01027
@@ -371,7 +374,6 @@ BLISSGVS,Bliss GVS Pharma Limited,INE416D01022
 BLKASHYAP,B. L. Kashyap and Sons Limited,INE350H01032
 BLS,BLS International Services Limited,INE153T01027
 BLSE,BLS E-Services Limited,INE0NLT01010
-BLUECHIP,Blue Chip India Limited,INE657B01025
 BLUECLOUDS,Blue Cloud Softech Solutions Limited,INE373T01047
 BLUECOAST,Blue Coast Hotels Limited,INE472B01011
 BLUEDART,Blue Dart Express Limited,INE233B01017
@@ -445,12 +447,12 @@ CELLO,Cello World Limited,INE0LMW01024
 CEMPRO,Cemindia Projects Limited,INE686A01026
 CENTENKA,Century Enka Limited,INE485A01015
 CENTEXT,Century Extrusions Limited,INE281A01026
+CENTEXT-RE,Century Extrusions Limited-RE,INE281A20018
 CENTRALBK,Central Bank of India,INE483A01010
 CENTRUM,Centrum Capital Limited,INE660C01027
 CENTUM,Centum Electronics Limited,INE320B01020
 CENTURYPLY,Century Plyboards (India) Limited,INE348B01021
 CERA,Cera Sanitaryware Limited,INE739E01017
-CEREBRAINT,Cerebra Integrated Technologies Limited,INE345B01019
 CESC,CESC Limited,INE486A01021
 CEWATER,Concord Enviro Systems Limited,INE037Z01029
 CFEL,Confidence Futuristic Energetech Limited,INE700F01024
@@ -475,12 +477,10 @@ CIFL,Capital India Finance Limited,INE345H01024
 CINELINE,Cineline India Limited,INE704H01022
 CINEVISTA,Cinevista Limited,INE039B01026
 CIPLA,Cipla Limited,INE059A01026
-CLCIND,CLC Industries Limited,INE376C01038
 CLEAN,Clean Science and Technology Limited,INE227W01023
 CLEANMAX,Clean Max Enviro Energy Solutions Limited,INE647U01026
 CLEDUCATE,CL Educate Limited,INE201M01029
 CLSEL,Chaman Lal Setia Exports Limited,INE419D01026
-CMICABLES,CMI Limited,INE981B01011
 CMLL,Caliber Mining and Logistics Limited,INE11XY01018
 CMPDI,Central Mine Planning & Design Institute Limited,INE05HV01027
 CMRGREEN,CMR Green Technologies Limited,INE00WV01027
@@ -652,7 +652,6 @@ ECLERX,eClerx Services Limited,INE738I01010
 ECORECO,Eco Recycling Limited,INE316A01038
 ECOSMOBLTY,Ecos (India) Mobility & Hospitality Limited,INE06HJ01020
 EDELWEISS,Edelweiss Financial Services Limited,INE532F01054
-EDUCOMP,Educomp Solutions Limited,INE216H01027
 EFCIL,EFC (I) Limited,INE886D01026
 EICHERMOT,Eicher Motors Limited,INE066A01021
 EIDPARRY,EID Parry India Limited,INE126A01031
@@ -669,6 +668,7 @@ ELDEHSG,Eldeco Housing And Industries Limited,INE668G01021
 ELECON,Elecon Engineering Company Limited,INE205B01031
 ELECTCAST,Electrosteel Castings Limited,INE086A01029
 ELECTHERM,Electrotherm (India) Limited,INE822G01016
+ELEVATE,Elevate Campuses Limited,INE147X01013
 ELGIEQUIP,Elgi Equipments Limited,INE285A01027
 ELGIRUBCO,Elgi Rubber Company Limited,INE819L01012
 ELIN,Elin Electronics Limited,INE050401020
@@ -882,6 +882,7 @@ GRWRHITECH,Garware Hi-Tech Films Limited,INE291A01017
 GSFC,Gujarat State Fertilizers & Chemicals Limited,INE026A01025
 GSLSU,Global Surfaces Limited,INE0JSX01015
 GSPCROP,GSP Crop Science Limited,INE713R01022
+GSPLTRANS,GSPL Transmission Limited,INE1TUG01013
 GSS,GSS Infotech Limited,INE871H01011
 GTECJAINX,G-TEC JAINX EDUCATION LIMITED,INE586X01012
 GTL,GTL Limited,INE043A01012
@@ -934,12 +935,13 @@ HDIL,Housing Development and Infrastructure Limited,INE191I01012
 HEADSUP,Heads UP Ventures Limited,INE759V01019
 HEALTHX,Health X Platform Limited,INE019J01013
 HECPROJECT,HEC Infra Projects Limited,INE558R01013
-HEG,HEG Limited,INE545A01024
+HEGAM,HEG Advanced Materials Limited,INE545A01024
 HEIDELBERG,HeidelbergCement India Limited,INE578A01017
 HEMIPROP,Hemisphere Properties India Limited,INE0AJG01018
 HERANBA,Heranba Industries Limited,INE694N01015
 HERITGFOOD,Heritage Foods Limited,INE978A01027
 HEROMOTOCO,Hero MotoCorp Limited,INE158A01026
+HEROMOTORS,Hero Motors Limited,INE012G01022
 HESTERBIO,Hester Biosciences Limited,INE782E01017
 HEXAGON,Hexagon Nutrition Limited,INE0JUI01012
 HEXATRADEX,Hexa Tradex Limited,INE750M01017
@@ -1024,7 +1026,6 @@ IL&FSTRANS,IL&FS Transportation Networks Limited,INE975G01012
 IMAGICAA,Imagicaaworld Entertainment Limited,INE172N01012
 IMFA,Indian Metals & Ferro Alloys Limited,INE919H01018
 IMPAL,India Motor Parts and Accessories Limited,INE547E01014
-IMPEXFERRO,Impex Ferro Tech Limited,INE691G01015
 INA,Insolation Energy Limited,INE0LGX01024
 INCREDIBLE,INCREDIBLE INDUSTRIES LIMITED,INE452L01012
 INDBANK,Indbank Merchant Banking Services Limited,INE841B01017
@@ -1152,6 +1153,7 @@ JOCIL,Jocil Limited,INE839G01010
 JPOLYINVST,Jindal Poly Investment and Finance Company Limited,INE147P01019
 JPPOWER,Jaiprakash Power Ventures Limited,INE351F01018
 JSFB,Jana Small Finance Bank Limited,INE953L01027
+JSIPL,Jindal Supreme (India) Limited,INE1DLO01028
 JSL,Jindal Stainless Limited,INE220G01021
 JSLL,Jeena Sikho Lifecare Limited,INE0J5801029
 JSWCEMENT,JSW Cement Limited,INE718I01012
@@ -1299,7 +1301,6 @@ LANCORHOL,Lancor Holdings Limited,INE572G01025
 LANDMARK,Landmark Cars Limited,INE559R01029
 LANDSMILL,Landsmill Green Limited,INE688J01023
 LAOPALA,La Opala RG Limited,INE059D01020
-LASA,Lasa Supergenerics Limited,INE670X01014
 LASERPOWER,Laser Power & Infra Limited,INE17IR01028
 LATENTVIEW,Latent View Analytics Limited,INE0I7C01011
 LATTEYS,Latteys Industries Limited,INE262Z01023
@@ -1488,8 +1489,8 @@ MOLDTKPAC,Mold-Tek Packaging Limited,INE893J01029
 MOMSBELIEF,Rays of Belief Limited,INE1FCO01014
 MONARCH,Monarch Networth Capital Limited,INE903D01011
 MONEYBOXX,Moneyboxx Finance Limited,INE296Q01012
+MONEYVIEW,Moneyview Limited,INE0PTN01011
 MONTECARLO,Monte Carlo Fashions Limited,INE950M01013
-MORARJEE,Morarjee Textiles Limited,INE161G01027
 MOREPENLAB,Morepen Laboratories Limited,INE083A01026
 MOSCHIP,Moschip Technologies Limited,INE935B01025
 MOTHERSON,Samvardhana Motherson International Limited,INE775A01035
@@ -1526,7 +1527,6 @@ MVGJL,Manoj Vaibhav Gems N Jewellers Limited,INE0KNT01012
 MWL,Mangalam Worldwide Limited,INE0JYY01029
 MYSORPETRO,Mysore Petro Chemicals Limited,INE741A01011
 NACLIND,NACL Industries Limited,INE295D01020
-NAGAFERT,Nagarjuna Fertilizers and Chemicals Limited,INE454M01024
 NAGREEKCAP,Nagreeka Capital & Infrastructure Limited,INE245I01016
 NAGREEKEXP,Nagreeka Exports Limited,INE123B01028
 NAHARCAP,Nahar Capital and Financial Services Limited,INE049I01012
@@ -1664,7 +1664,6 @@ ORIENTTECH,Orient Technologies Limited,INE0PPK01015
 ORIRAIL,Oriental Rail Infrastructure Limited,INE457G01029
 ORISSAMINE,The Orissa Minerals Development Company Limited,INE725E01024
 ORKLAINDIA,Orkla India Limited,INE16NZ01023
-ORTEL,Ortel Communications Limited,INE849L01019
 ORTINGLOBE,ORTIN GLOBAL LIMITED,INE749B01020
 OSIAHYPER,Osia Hyper Retail Limited,INE06IR01021
 OSWALAGRO,Oswal Agro Mills Limited,INE142A01012
@@ -1690,6 +1689,7 @@ PARADEEP,Paradeep Phosphates Limited,INE088F01024
 PARAGMILK,Parag Milk Foods Limited,INE883N01014
 PARAS,Paras Defence and Space Technologies Limited,INE045601023
 PARASPETRO,Paras Petrofils Limited,INE162C01024
+PARIN,Parin Enterprises Limited,INE00U801010
 PARKHOSPS,Park Medi World Limited,INE119201023
 PARKHOTELS,Apeejay Surrendra Park Hotels Limited,INE988S01028
 PARNAXLAB,Parnax Lab Limited,INE383L01019
@@ -1838,7 +1838,6 @@ RAJRATAN,Rajratan Global Wire Limited,INE451D01029
 RAJRILTD,Raj Rayon Industries Limited,INE533D01032
 RAJSREESUG,Rajshree Sugars & Chemicals Limited,INE562B01019
 RAJTV,Raj Television Network Limited,INE952H01027
-RAJVIR,Rajvir Industries Limited,INE011H01014
 RALLIS,Rallis India Limited,INE613A01020
 RAMANEWS,Shree Rama Newsprint Limited,INE278B01020
 RAMAPHO,Rama Phosphates Limited,INE809A01032
@@ -1977,7 +1976,6 @@ SANDHAR,Sandhar Technologies Limited,INE278H01035
 SANDUMA,Sandur Manganese & Iron Ores Limited,INE149K01016
 SANGAMIND,Sangam (India) Limited,INE495C01010
 SANGHVIMOV,Sanghvi Movers Limited,INE989A01032
-SANGINITA,Sanginita Chemicals Limited,INE753W01010
 SANOFI,Sanofi India Limited,INE058A01010
 SANOFICONR,Sanofi Consumer Healthcare India Limited,INE0UOS01011
 SANSERA,Sansera Engineering Limited,INE953O01021
@@ -2019,7 +2017,6 @@ SEDEMAC,SEDEMAC Mechatronics Limited,INE00XB01019
 SEIL,Shanti Educational Initiatives Limited,INE440T01028
 SEJALLTD,Sejal Glass Limited,INE955I01044
 SEKURITIND,Saint Gobain Sekurit India Limited,INE068B01017
-SELMC,SEL Manufacturing Company Limited,INE105I01020
 SEMAC,Semac Construction Limited,INE617A01013
 SENCO,Senco Gold Limited,INE602W01027
 SENORES,Senores Pharmaceuticals Limited,INE0RB801010
@@ -2121,7 +2118,6 @@ SJS,S.J.S. Enterprises Limited,INE284S01014
 SJVN,SJVN Limited,INE002L01015
 SKFINDIA,SKF India Limited,INE640A01023
 SKFINDUS,SKF India (Industrial) Limited,INE2J8701016
-SKIL,SKIL Infrastructure Limited,INE429F01012
 SKIPPER,Skipper Limited,INE439E01022
 SKMEGGPROD,SKM Egg Products Export (India) Limited,INE411D01023
 SKYGOLD,SKY GOLD AND DIAMONDS LIMITED,INE01IU01018
@@ -2142,6 +2138,7 @@ SOLEX,Solex Energy Limited,INE880Y01017
 SOMANYCERA,Somany Ceramics Limited,INE355A01028
 SOMATEX,Soma Textiles & Industries Limited,INE314C01013
 SOMICONVEY,Somi Conveyor Beltings Limited,INE323J01019
+SONA,Sonaselection India Limited,INE0LLZ01011
 SONACOMS,Sona BLW Precision Forgings Limited,INE073K01018
 SONAL,Sonal Mercantile Limited,INE321M01017
 SONAMLTD,SONAM LIMITED,INE00LM01029
@@ -2155,7 +2152,6 @@ SPARC,Sun Pharma Advanced Research Company Limited,INE232I01014
 SPCENET,Spacenet Enterprises India Limited,INE970N01027
 SPECIALITY,Speciality Restaurants Limited,INE247M01014
 SPECTRUM,Spectrum Electrical Industries Limited,INE01EO01010
-SPELS,SPEL Semiconductor Limited,INE252A01019
 SPENCERS,Spencer's Retail Limited,INE020801028
 SPIC,Southern Petrochemicals Industries Corporation  Limited,INE147A01011
 SPLIL,SPL Industries Limited,INE978G01016
@@ -2171,6 +2167,7 @@ SRIKPRIND,Sri KPR Industries Limited,INE009C01019
 SRM,SRM Contractors Limited,INE0R6Z01013
 SRTL,Shree Ram Twistex Limited,INE19GK01015
 SSDL,Saraswati Saree Depot Limited,INE0PQ101010
+SSRETAIL,SS Retail Limited,INE1EQW01028
 SSWL,Steel Strips Wheels Limited,INE802C01033
 STALLION,Stallion India Fluorochemicals Limited,INE0RYC01010
 STANLEY,Stanley Lifestyles Limited,INE01A001028
@@ -2252,6 +2249,7 @@ SWANDEF,Swan Defence and Heavy Industries Limited,INE542F01020
 SWARAJ,Swaraj Suiting Limited,INE0GMR01016
 SWARAJENG,Swaraj Engines Limited,INE277A01016
 SWARNSAR,Swarnsarita Jewels India Limited,INE967A01012
+SWASTIKAIN,Swastika Infra Limited,INE1QJA01015
 SWELECTES,Swelect Energy Systems Limited,INE409B01013
 SWIGGY,Swiggy Limited,INE00H001014
 SWISSMLTRY,Swiss Military Consumer Goods Limited,INE010C01025
@@ -2262,7 +2260,7 @@ SYNCOMF,Syncom Formulations (India) Limited,INE312C01025
 SYNGENE,Syngene International Limited,INE398R01022
 SYRMA,Syrma SGS Technology Limited,INE0DYJ01015
 SYSTMTXC,Systematix Corporate Services Limited,INE356B01024
-TAALTECH,Taal Tech Limited,INE524T01011
+TAALTECH,Taal Tech Limited,INE524T01029
 TAINWALCHM,Tainwala Chemical and Plastic (I) Limited,INE123C01018
 TAJGVK,Taj GVK Hotels & Resorts Limited,INE586B01026
 TAKE,TAKE Limited,INE142I01023
@@ -2421,7 +2419,6 @@ UNITDSPR,United Spirits Limited,INE854D01024
 UNITECH,Unitech Limited,INE694A01020
 UNITEDPOLY,United Polyfab Gujarat Limited,INE368U01029
 UNITEDTEA,The United Nilgiri Tea Estates Company Limited,INE458F01011
-UNIVAFOODS,Univa Foods Limited,INE275F01019
 UNIVASTU,Univastu India Limited,INE562X01013
 UNIVCABLES,Universal Cables Limited,INE279A01012
 UNIVPHOTO,Universus Photo Imagings Limited,INE03V001013
@@ -2449,6 +2446,7 @@ VALIANTORG,Valiant Organics Limited,INE565V01010
 VAML,Vedanta Aluminium Metal Limited,INE1CDF01017
 VARDHACRLC,Vardhman Acrylics Limited,INE116G01013
 VARDMNPOLY,Vardhman Polytex Limited,INE835A01029
+VARMORA,Varmora Granito Limited,INE0M5301040
 VARROC,Varroc Engineering Limited,INE665L01035
 VASCONEQ,Vascon Engineers Limited,INE893I01013
 VASUPRADA,Shri Vasuprada Plantations Limited,INE574G01013
